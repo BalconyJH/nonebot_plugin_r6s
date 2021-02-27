@@ -16,7 +16,7 @@ async def get_data(usr_name: str, trytimes=6) -> dict:
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
-        if not response.json():
+        if not response.json() and trytimes == 1:
             return "Not Found"
         r: dict = response.json()
         if not (r.get("username") or r.get("StatCR")):
