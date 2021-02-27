@@ -41,7 +41,7 @@ async def handler(matcher, state: T_State, func):
     data = await get_data(username)
     if not data:
         await matcher.finish("R6sCN又抽风啦，请稍后再试。")
-    elif data == "Not Found" or not data.get("SeasonRanks"):
+    elif data == "Not Found":
         await matcher.finish("未找到干员『%s』" % username)
     await matcher.finish(func(data))
 
