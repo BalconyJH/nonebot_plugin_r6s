@@ -42,7 +42,8 @@ def gen_stat(data: dict) -> str:
     return con(
         "KD：%.2f" % (data["kills"] / data["deaths"]) if data["deaths"] != 0 else (
             "KD：%d/%d" % (data["kills"], data["deaths"])),
-        "胜负比：%.2f" % (data["won"] / data["lost"]),
+        "胜负比：%.2f" % (data["won"] / data["lost"]) if data["lost"] != 0 else (
+            "胜负比：%d/%d" % (data["won"], data["lost"])),
         "总场数：%d" % data["played"],
         "游戏时长：%.1f" % (data["timePlayed"] / 3600)
     )
