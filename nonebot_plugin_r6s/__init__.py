@@ -6,6 +6,7 @@ import ujson as json
 import os
 
 from .r6s_data import *
+from .r6s_ground import get_data as get_data_from_ground
 
 
 r6s = on_command("r6s", aliases={"彩六", "彩虹六号", "r6", "R6"}, rule=to_me())
@@ -16,6 +17,7 @@ r6s_set = on_command("r6sset", aliases={"r6set", "R6set"}, rule=to_me())
 
 
 _cachepath = os.path.join("cache", "r6s.json")
+ground_can_do = (base, pro)  # ground数据源乱码过多，干员和近期战绩还在努力解码中···
 
 
 if not os.path.exists("cache"):
@@ -38,11 +40,17 @@ def set_usr_args(state: T_State, event: Event):
 
 async def handler(matcher, state: T_State, func):
     username = state["username"]
-    data = await get_data(username)
+    if func in ground_can_do:
+        # 优先使用ground数据源，cn数据源存在部分休闲与排位错位问题
+        data = await get_data_from_ground(username)
+    else:
+        data = await get_data(username)
     if not data:
         await matcher.finish("R6sCN又抽风啦，请稍后再试。")
     elif data == "Not Found":
         await matcher.finish("未找到干员『%s』" % username)
+    elif not data.get("Casualstat") and not (func in ground_can_do):
+        await matcher.finish("R6sCN没有更新你的数据，你是不是开了白裤裆寒冬一击。")
     await matcher.finish(func(data))
 
 
