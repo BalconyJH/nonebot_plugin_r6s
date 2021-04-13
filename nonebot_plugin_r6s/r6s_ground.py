@@ -1,5 +1,6 @@
 from httpx import AsyncClient
 import ujson as json
+import asyncio
 import re
 
 
@@ -11,20 +12,19 @@ async def get_id(name: str):
     if id:
         return id
 
+    '''
     # 从R6_ground搜索获取ubi_id
     async with AsyncClient() as client:
         resp = await client.get("https://global.r6sground.cn/cache/%s/search" % name)
     data = resp.json()
     if data["hits"]:
         return data["hits"]["u0"]["uplayMainId"]
+    '''
 
     return "Not Found"
 
 
-async def get_data(name: str) -> dict:
-    ubi_id = await get_id(name)
-    if ubi_id == "Not Found" or not ubi_id:
-        return "Not Found"
+async def _get_data(ubi_id: str) -> dict:
     async with AsyncClient() as client:
         resp = await client.get("https://global.r6sground.cn/stats/%s/data" % ubi_id)
     datas = re.split(r"(data: )", resp.text)
@@ -39,7 +39,23 @@ async def get_data(name: str) -> dict:
             rdatas[d_jdson["key"]] = d_jdson["data"]
     if not rdatas.get("userMainData"):
         return "Not Found"
-    return trans_data(rdatas)
+    elif not rdatas["userMainData"].get("!15$_!6$s:!5$"):
+        return "Not Found"  # 应该是有ubi账号但没打过R6
+    return rdatas
+
+
+async def get_data(name: str, retry: int = 3) -> dict:
+    ubi_id = await get_id(name)
+    if ubi_id == "Not Found" or not ubi_id:
+        return "Not Found"
+    rdata = await _get_data(ubi_id)
+    while rdata == "Not Found" and retry != 0:
+        asyncio.sleep(1)
+        rdata = await _get_data(ubi_id)
+        retry -= 1
+    if retry == 0:
+        return "Not Found"
+    return trans_data(rdata)
 
 
 def trans_data(data: dict) -> dict:
