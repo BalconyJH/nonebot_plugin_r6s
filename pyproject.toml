@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_r6s"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 description = "A R6s plugin for Nonebot2"
 authors = ["abrahumlink <307887491@qq.com>"]
 documentation = "https://github.com/abrahum/nonebot_plugin_r6s#readme"
@@ -13,7 +13,7 @@ keywords = ["nonebot", "nonebot2", "r6s"]
 python = "^3.7"
 nonebot2 = "^2.0.0-alpha.10"
 ujson = "^4.0.2"
-httpx = "^0.16.1"
+httpx = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 

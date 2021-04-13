@@ -118,9 +118,17 @@ def operators(data: dict) -> str:
 
 
 def gen_play(data: dict) -> str:
+    update_at_date = [
+        str(data["update_at"]["year"]+1900),
+        str(data["update_at"]["month"]),
+        str(data["update_at"]["date"]),
+    ]
+    update_at_time = [
+        str(data["update_at"]["hours"]),
+        str(data["update_at"]["minutes"])
+    ]
     return con(
-        "对战时间："+str(data["update_at"]["date"])+"日" +
-        str(data["update_at"]["hours"])+"点",
+        ".".join(update_at_date)+" "+":".join(update_at_time),
         "胜/负：%d/%d" % (data["won"], data["lost"]),
         "KD：%.2f %d/%d" % ((data["kills"]/data["deaths"]), data["kills"], data["deaths"]
                            ) if data["deaths"] != 0 else ("KD：- %d/%d" % (data["kills"], data["deaths"]))
