@@ -47,6 +47,10 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 - ground 数据源乱码严重，目前无法识别干员数据和近期对战数据
 - 已知 ground 数据源第一次使用会返回未更新数据，待研究解决（咕咕咕）
 
+### 0.2.0-alpha.2
+
+- 针对有 Ubi 账号未游玩 R6s 账号返回 Not Found
+
 ## 特别鸣谢
 
 [nonebot/nonebot2](https://github.com/nonebot/nonebot2/)：简单好用，扩展性极强的 Bot 框架
