@@ -39,6 +39,14 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 |r6sp|r6p，R6p|昵称|查询玩家近期对战信息|
 |r6sset|r6set，R6set|昵称|设置玩家昵称，设置后其余指令可以不带昵称即查询已设置昵称信息|
 
+## 更新日志
+
+### 0.2.0-alpha.1
+
+- 更换优先使用 ground 数据源，cn 数据源存在排位休闲数据错位，改名后数据长期未更新问题。
+- ground 数据源乱码严重，目前无法识别干员数据和近期对战数据
+- 已知 ground 数据源第一次使用会返回未更新数据，待研究解决（咕咕咕）
+
 ## 特别鸣谢
 
 [nonebot/nonebot2](https://github.com/nonebot/nonebot2/)：简单好用，扩展性极强的 Bot 框架

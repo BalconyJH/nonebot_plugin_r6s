@@ -2,6 +2,30 @@ import httpx
 import asyncio
 
 
+def rank(mmr: int) -> str:
+    head = ["紫铜", "黄铜", "白银", "黄金", "白金", "钻石", "冠军"]
+    feet1 = ["V", "IV", "III", "II", "I"]
+    feet2 = ["III", "II", "I"]
+    if mmr < 2600:
+        mmrd = int(mmr // 100 - 11)
+        if mmrd < 5:
+            return head[0] + feet1[mmrd]
+        elif mmrd < 10:
+            return head[1] + feet1[mmrd-5]
+        else:
+            return head[2] + feet1[mmrd-10]
+    elif mmr < 4400:
+        mmrd = int(mmr // 200 - 13)
+        if mmrd < 3:
+            return head[3] + feet2[mmrd]
+        else:
+            return head[4] + feet2[mmrd-3]
+    elif mmr < 5000:
+        return head[-2]
+    else:
+        return head[-1]
+
+
 async def get_data(usr_name: str, trytimes=6) -> dict:
     if trytimes == 0:
         return ""
@@ -66,8 +90,9 @@ def pro(data: dict) -> str:
         casual = False
     return con(
         data["username"], r, "",
-        "排位MMR：%d\n休闲隐藏MMR：%d" % (data["Basicstat"][0]["mmr"], data["Casualstat"]
-                                  ["mmr"]) if not casual else "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"],
+        "排位MMR：%d\n隐藏MMR：%d\n隐藏Rank：%s" % (data["Basicstat"][0]["mmr"], data["Casualstat"]
+                                           ["mmr"], rank(data["Casualstat"]
+                                                         ["mmr"])) if not casual else "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"],
         "爆头击杀率：%.2f" % (data["StatGeneral"][0]["headshot"] /
                         data['StatGeneral'][0]['kills']),
     )
