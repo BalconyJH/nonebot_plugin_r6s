@@ -19,7 +19,7 @@ def rank(mmr: int) -> str:
         if mmrd < 3:
             return head[3] + feet2[mmrd]
         else:
-            return head[4] + feet2[mmrd-3]
+            return head[4] + feet2[(mmrd-3)//2]
     elif mmr < 5000:
         return head[-2]
     else:
@@ -120,7 +120,7 @@ def operators(data: dict) -> str:
 def gen_play(data: dict) -> str:
     update_at_date = [
         str(data["update_at"]["year"]+1900),
-        str(data["update_at"]["month"]),
+        str(data["update_at"]["month"]+1),
         str(data["update_at"]["date"]),
     ]
     update_at_time = [
