@@ -90,9 +90,10 @@ def pro(data: dict) -> str:
         casual = False
     return con(
         data["username"], r, "",
-        "排位MMR：%d\n隐藏MMR：%d\n隐藏Rank：%s" % (data["Basicstat"][0]["mmr"], data["Casualstat"]
-                                           ["mmr"], rank(data["Casualstat"]
-                                                         ["mmr"])) if not casual else "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"],
+        "排位MMR：%d\n隐藏MMR：%d\n隐藏Rank：%s" %
+        (data["Basicstat"][0]["mmr"],
+         data["Casualstat"]["mmr"],
+         rank(data["Casualstat"]["mmr"])) if not casual else "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"],
         "爆头击杀率：%.2f" % (data["StatGeneral"][0]["headshot"] /
                         data['StatGeneral'][0]['kills']),
     )
