@@ -1,7 +1,7 @@
 # nonebot_plugin_r6s
 仅针对zhenxun_bot作出了相应适配
 
-#项目源地址
+# 项目源地址
 https://github.com/abrahum/nonebot_plugin_r6s
 
 ## 指令详解
