@@ -11,9 +11,9 @@ keywords = ["nonebot", "nonebot2", "r6s"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-nonebot2 = "^2.0.0-alpha.10"
+nonebot2 = "^2.0.0a16"
 ujson = "^4.0.2"
-httpx = "^0.17"
+httpx = "^0.21.1"
 Pillow = "^8.4.0"
 
 [tool.poetry.dev-dependencies]
