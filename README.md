@@ -1,0 +1,2 @@
+# nonebot_plugin_r6s
+仅针对zhenxun_bot作出了相应适配
