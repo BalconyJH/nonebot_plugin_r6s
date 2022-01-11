@@ -109,7 +109,6 @@ async def plays_image(player: Player) -> Image:
             f"局数: {stat.played}\n"
             f"时长: {stat.timePlayed / 3600:.2f}",
             fill='black', font=GEN_WAN_MIN_S, spacing=20)
-        print(stat)
         draw.multiline_text(
             (400, offset + 70),
             f"KD: {stat.kd()}\n"

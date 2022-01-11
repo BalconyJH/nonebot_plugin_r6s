@@ -15,7 +15,7 @@ Rainbow Six Siege Players Searcher For Nonebot2
   <a href="https://pypi.python.org/pypi/nonebot-plugin-r6s">
     <img src="https://img.shields.io/pypi/v/nonebot-plugin-r6s.svg" alt="pypi">
   </a>
-  <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="python">
+  <img src="https://img.shields.io/badge/python-3.7.3+-blue.svg" alt="python">
 </p>
 
 ## 使用方法
@@ -40,6 +40,11 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 |r6sset|r6set，R6set|昵称|设置玩家昵称，设置后其余指令可以不带昵称即查询已设置昵称信息|
 
 ## 更新日志
+
+### 0.4.0
+
+- 适配 Nonebot2-beta.1
+- python3.7.3+ 与 nonebot2 保持一致
 
 ### 0.3.0
 
