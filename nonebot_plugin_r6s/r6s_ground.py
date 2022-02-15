@@ -50,7 +50,7 @@ async def get_data(name: str, retry: int = 3) -> dict:
         return "Not Found"
     rdata = await _get_data(ubi_id)
     while rdata == "Not Found" and retry != 0:
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
         rdata = await _get_data(ubi_id)
         retry -= 1
     if retry == 0:

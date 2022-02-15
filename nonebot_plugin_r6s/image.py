@@ -1,5 +1,7 @@
 from .player import Player, CRStat, rank, OperatorStat
 from PIL import Image, ImageDraw, ImageFont
+from PIL.Image import Image as IMG
+from PIL.ImageDraw import ImageDraw as IMGDraw
 from io import BytesIO
 from pathlib import Path
 import time
@@ -20,18 +22,18 @@ def operator_img_path(operator: str) -> str:
     return str((IMGS_PATH / "operators" / f"{operator}.png").resolve())
 
 
-def paste_with_alpha(image: Image, img: Image, pos: tuple) -> None:
+def paste_with_alpha(image: IMG, img: IMG, pos: tuple) -> None:
     img_alpha = img.split()[3]
     image.paste(img, pos, img_alpha)
 
 
-def encode_b64(img: Image) -> str:
+def encode_b64(img: IMG) -> str:
     img_io = BytesIO()
     img.save(img_io, "PNG")
     return base64.b64encode(img_io.getvalue()).decode()
 
 
-async def draw_head(img: Image, player: Player, title: str) -> ImageDraw:
+async def draw_head(img: IMG, player: Player, title: str) -> IMGDraw:
     avatar_data = BytesIO(await player.get_avatar())
     avatar = Image.open(avatar_data).convert("RGBA").resize((110, 110))
     paste_with_alpha(img, avatar, (40, 40))
@@ -41,7 +43,7 @@ async def draw_head(img: Image, player: Player, title: str) -> ImageDraw:
     return draw
 
 
-async def base_image(player: Player) -> Image:
+async def base_image(player: Player) -> IMG:
     image = Image.new('RGBA', (800, 420), color='white')
     draw = await draw_head(image, player, "基础信息")
 
@@ -66,8 +68,8 @@ async def base_image(player: Player) -> Image:
     return image
 
 
-async def detail_image(player: Player) -> Image:
-    def draw_rank(img: Image, draw: ImageDraw,  stat: CRStat, offset: int):
+async def detail_image(player: Player) -> IMG:
+    def draw_rank(img: IMG, draw: IMGDraw,  stat: CRStat, offset: int):
         ranked_rank = Image.open(rank_img_path(
             rank(stat.mmr))).resize((150, 150))
         paste_with_alpha(img, ranked_rank, (20, offset + 20))
@@ -98,8 +100,8 @@ async def detail_image(player: Player) -> Image:
     return image
 
 
-async def plays_image(player: Player) -> Image:
-    def draw_play(draw: ImageDraw, stat: CRStat, offset: int):
+async def plays_image(player: Player) -> IMG:
+    def draw_play(draw: IMGDraw, stat: CRStat, offset: int):
         timestr = time.strftime(
             "%Y-%m-%d %H:%M", time.localtime(stat.time/1000))
         draw.text((20, offset + 20), timestr,
@@ -125,8 +127,8 @@ async def plays_image(player: Player) -> Image:
     return image
 
 
-async def operators_img(player: Player) -> Image:
-    def draw_operator(img: Image, draw: ImageDraw, operator: OperatorStat, offset: int, second: bool):
+async def operators_img(player: Player) -> IMG:
+    def draw_operator(img: IMG, draw: IMGDraw, operator: OperatorStat, offset: int, second: bool):
         operator_img = Image.open(operator_img_path(
             operator.name)).resize((170, 170))
         paste_with_alpha(img, operator_img, (400 if second else 10, offset + 10))
