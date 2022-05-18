@@ -15,7 +15,7 @@ Rainbow Six Siege Players Searcher For Nonebot2
   <a href="https://pypi.python.org/pypi/nonebot-plugin-r6s">
     <img src="https://img.shields.io/pypi/v/nonebot-plugin-r6s.svg" alt="pypi">
   </a>
-  <img src="https://img.shields.io/badge/python-3.8.0+-blue.svg" alt="python">
+  <img src="https://img.shields.io/badge/python-3.7.3+-blue.svg" alt="python">
 </p>
 
 ## 使用方法
@@ -31,12 +31,12 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 
 ## 指令详解
 
-|  指令  |          别名          | 可接受参数 | 功能                             |
-| :----: | :--------------------: | ---------- |--------------------------------|
-|  r6s   | 彩六，彩虹六号，r6，R6 | 昵称       | 查询玩家基本信息                       |
-| r6spro |      r6pro，R6pro      | 昵称       | 查询玩家进阶信息                       |
-| r6sops |      r6ops，R6ops      | 昵称       | 查询玩家干员信息                       |
-|  r6sp  |        r6p，R6p        | 昵称       | 查询玩家 ~~近期对战~~ 历史段位信息           |
+|  指令  |          别名          | 可接受参数 | 功能                                                         |
+| :----: | :--------------------: | ---------- | ------------------------------------------------------------ |
+|  r6s   | 彩六，彩虹六号，r6，R6 | 昵称       | 查询玩家基本信息                                             |
+| r6spro |      r6pro，R6pro      | 昵称       | 查询玩家进阶信息                                             |
+| r6sops |      r6ops，R6ops      | 昵称       | 查询玩家干员信息                                             |
+|  r6sp  |        r6p，R6p        | 昵称       | 查询玩家 ~~近期对战~~ 历史段位信息                           |
 | r6sset |      r6set，R6set      | 昵称       | 设置玩家昵称，设置后其余指令可以不带昵称即查询已设置昵称信息 |
 
 ## 更新日志
@@ -51,6 +51,8 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 - 修复已知BUG:
   > 修复因玩家头像获取不到导致的出错  
   修复因干员头像获取不到导致的出错
+
+> Thanks for [#6](https://github.com/abrahum/nonebot_plugin_r6s/pull/6)
 
 ### 0.4.1
 
