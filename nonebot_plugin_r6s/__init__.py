@@ -13,22 +13,14 @@ from .net import get_data_from_r6scn
 from .image import *
 from .player import new_player_from_r6scn
 
-
-r6s = on_command("r6s", aliases={
-                 "彩六", "彩虹六号", "r6", "R6"}, rule=to_me(), priority=5, block=True)
-r6s_pro = on_command("r6spro", aliases={
-                     "r6pro", "R6pro"}, rule=to_me(), priority=5, block=True)
-r6s_ops = on_command("r6sops", aliases={
-                     "r6ops", "R6ops"}, rule=to_me(), priority=5, block=True)
-r6s_plays = on_command(
-    "r6sp", aliases={"r6p", "R6p"}, rule=to_me(), priority=5, block=True)
-r6s_set = on_command("r6sset", aliases={
-                     "r6set", "R6set"}, rule=to_me(), priority=5, block=True)
-
+r6s = on_command("r6s", aliases={"彩六", "彩虹六号", "r6", "R6"}, priority=5, block=True)
+r6s_pro = on_command("r6spro", aliases={"r6pro", "R6pro"}, priority=5, block=True)
+r6s_ops = on_command("r6sops", aliases={"r6ops", "R6ops"}, priority=5, block=True)
+r6s_plays = on_command("r6sp", aliases={"r6p", "R6p"}, priority=5, block=True)
+r6s_set = on_command("r6sset", aliases={"r6set", "R6set"}, priority=5, block=True)
 
 _cachepath = os.path.join("cache", "r6s.json")
 ground_can_do = (base, pro)  # ground数据源乱码过多，干员和近期战绩还在努力解码中···
-
 
 if not os.path.exists("cache"):
     os.makedirs("cache")
@@ -53,7 +45,11 @@ async def new_handler(matcher: Matcher, username: str, func: FunctionType):
     data = await get_data_from_r6scn(username)
     if data == "Not Found":
         await matcher.finish("未找到干员『%s』" % username)
-    player = new_player_from_r6scn(data)
+    try:
+        player = new_player_from_r6scn(data)
+    except:
+        await matcher.finish("查询干员出错『%s』" % username)
+        return
     img_b64 = encode_b64(await func(player))
     await matcher.finish(MessageSegment.image(file=f"base64://{img_b64}"))
 
