@@ -1,5 +1,5 @@
 import httpx
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 
 class DataStruct:
@@ -165,7 +165,7 @@ class Player(DataStruct):
             level = max(level, stat.level)
         return level
 
-    async def get_avatar(self, retry_times=0) -> bytes | None:
+    async def get_avatar(self, retry_times=0) -> Union[bytes, None]:
         try:
             AVATAR_BASE = "https://ubisoft-avatars.akamaized.net/{}/default_146_146.png"
             async with httpx.AsyncClient() as client:

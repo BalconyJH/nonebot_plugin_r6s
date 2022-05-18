@@ -4,7 +4,7 @@ from PIL.Image import Image as IMG
 from PIL.ImageDraw import ImageDraw as IMGDraw
 from io import BytesIO
 from pathlib import Path
-import time
+# import time
 import base64
 
 RESOURCE_PATH = Path(__file__).parent
