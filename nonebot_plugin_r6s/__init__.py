@@ -36,19 +36,18 @@ def set_usr_args(matcher: Matcher, event: Event, msg: Message):
     else:
         with open(_cachepath, "r", encoding="utf-8") as f:
             data: dict = json.load(f)
-        username = data.get(event.get_user_id())
-        if username:
+        if username := data.get(event.get_user_id()):
             matcher.set_arg("username", Message(username))
 
 
 async def new_handler(matcher: Matcher, username: str, func: FunctionType):
     data = await get_data_from_r6scn(username)
     if data == "Not Found":
-        await matcher.finish("未找到干员『%s』" % username)
+        await matcher.finish(f"未找到干员『{username}』")
     try:
         player = new_player_from_r6scn(data)
     except:
-        await matcher.finish("查询干员出错『%s』" % username)
+        await matcher.finish(f"查询干员出错『{username}』")
         return
     img_b64 = encode_b64(await func(player))
     await matcher.finish(MessageSegment.image(file=f"base64://{img_b64}"))
@@ -56,14 +55,13 @@ async def new_handler(matcher: Matcher, username: str, func: FunctionType):
 
 @r6s_set.handle()
 async def r6s_set_handler(event: Event, args: Message = CommandArg()):
-    args = args.extract_plain_text()
-    if args:
+    if args := args.extract_plain_text():
         with open(_cachepath, "r", encoding="utf-8") as f:
             data = json.load(f)
         data[event.get_user_id()] = args
         with open(_cachepath, "w", encoding="utf-8") as f:
             json.dump(data, f)
-        await r6s_set.finish("已设置ID：%s" % args)
+        await r6s_set.finish(f"已设置ID：{args}")
 
 
 @r6s.handle()

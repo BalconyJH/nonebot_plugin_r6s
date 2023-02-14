@@ -96,14 +96,14 @@ async def base_image(player: Player) -> IMG:
 
 async def detail_image(player: Player) -> IMG:
     def draw_rank(
-            img: IMG, draw: IMGDraw, stat: CRStat, offset: int, has_rank: bool = False
-    ):
+                img: IMG, draw: IMGDraw, stat: CRStat, offset: int, has_rank: bool = False
+        ):
         ranked_rank = (
-            Image.open(rank_img_path(rank(stat.mmr))).resize((150, 150))
-            if not has_rank
-            else Image.open(
+            Image.open(
                 rank_img_path(rank(player.history_max_mmr_season["max_mmr"]))
             ).resize((150, 150))
+            if has_rank
+            else Image.open(rank_img_path(rank(stat.mmr))).resize((150, 150))
         )
         paste_with_alpha(img, ranked_rank, (20, offset + 20))
         # draw.rounded_rectangle(
@@ -268,9 +268,7 @@ async def operators_img(player: Player) -> IMG:
     img = Image.new("RGBA", (800, 1600), color="white")
     draw = await draw_head(img, player, "干员信息")
     for (i, operator) in enumerate(player.operator_stat):
-        draw_operator(
-            img, draw, operator, 190 + i // 2 * 200, False if i % 2 == 0 else True
-        )
+        draw_operator(img, draw, operator, 190 + i // 2 * 200, i % 2 != 0)
         if i >= 13:
             break
 
