@@ -4,10 +4,10 @@ import asyncio
 
 def rank(mmr: int) -> str:
     head = ["紫铜", "黄铜", "白银", "黄金", "白金", "钻石", "冠军"]
-    feet1 = ["V", "IV", "III", "II", "I"]
     feet2 = ["III", "II", "I"]
     if mmr < 2600:
         mmrd = int(mmr // 100 - 11)
+        feet1 = ["V", "IV", "III", "II", "I"]
         if mmrd < 5:
             return head[0] + feet1[mmrd]
         elif mmrd < 10:
@@ -16,10 +16,7 @@ def rank(mmr: int) -> str:
             return head[2] + feet1[mmrd-10]
     elif mmr < 4400:
         mmrd = int(mmr // 200 - 13)
-        if mmrd < 3:
-            return head[3] + feet2[mmrd]
-        else:
-            return head[4] + feet2[(mmrd-3)//2]
+        return head[3] + feet2[mmrd] if mmrd < 3 else head[4] + feet2[(mmrd-3)//2]
     elif mmr < 5000:
         return head[-2]
     else:
@@ -30,8 +27,7 @@ async def get_data(usr_name: str, trytimes=6) -> dict:
     if trytimes == 0:
         return ""
     try:
-        base_url = "https://www.r6s.cn/Stats?username="
-        url = base_url + str(usr_name) + '&platform='
+        url = f"https://www.r6s.cn/Stats?username={usr_name}&platform="
         headers = {
             'Host': 'www.r6s.cn',
             'referer': 'https://www.r6s.cn',
@@ -56,9 +52,7 @@ async def get_data(usr_name: str, trytimes=6) -> dict:
 
 
 def con(*args) -> str:
-    r = ""
-    for arg in args:
-        r += arg + "\n"
+    r = "".join(arg + "\n" for arg in args)
     return r[:-1]
 
 
@@ -89,13 +83,22 @@ def pro(data: dict) -> str:
         r = con(r, "休闲数据" if casual else "\n排位数据", gen_stat(stat))
         casual = False
     return con(
-        data["username"], r, "",
-        "排位MMR：%d\n隐藏MMR：%d\n隐藏Rank：%s" %
-        (data["Basicstat"][0]["mmr"],
-         data["Casualstat"]["mmr"],
-         rank(data["Casualstat"]["mmr"])) if not casual else "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"],
-        "爆头击杀率：%.2f" % (data["StatGeneral"][0]["headshot"] /
-                        data['StatGeneral'][0]['kills']),
+        data["username"],
+        r,
+        "",
+        "休闲隐藏MMR：%d" % data["Casualstat"]["mmr"]
+        if casual
+        else "排位MMR：%d\n隐藏MMR：%d\n隐藏Rank：%s"
+        % (
+            data["Basicstat"][0]["mmr"],
+            data["Casualstat"]["mmr"],
+            rank(data["Casualstat"]["mmr"]),
+        ),
+        "爆头击杀率：%.2f"
+        % (
+            data["StatGeneral"][0]["headshot"]
+            / data['StatGeneral'][0]['kills']
+        ),
     )
 
 

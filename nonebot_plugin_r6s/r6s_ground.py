@@ -26,13 +26,11 @@ async def get_id(name: str):
 
 async def _get_data(ubi_id: str) -> dict:
     async with AsyncClient() as client:
-        resp = await client.get("https://global.r6sground.cn/stats/%s/data" % ubi_id)
+        resp = await client.get(f"https://global.r6sground.cn/stats/{ubi_id}/data")
     datas = re.split(r"(data: )", resp.text)
     rdatas = {}
     for d in datas:
-        if d[:1] != "{":
-            pass
-        else:
+        if d[:1] == "{":
             d = d.replace("!46$", "false")
             d = d.replace("!47$", "true")
             d_jdson = json.loads(d)
@@ -53,9 +51,7 @@ async def get_data(name: str, retry: int = 3) -> dict:
         await asyncio.sleep(1)
         rdata = await _get_data(ubi_id)
         retry -= 1
-    if retry == 0:
-        return "Not Found"
-    return trans_data(rdata)
+    return "Not Found" if retry == 0 else trans_data(rdata)
 
 
 def trans_data(data: dict) -> dict:

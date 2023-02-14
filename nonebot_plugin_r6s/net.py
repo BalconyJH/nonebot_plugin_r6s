@@ -8,8 +8,7 @@ async def get_data_from_r6scn(user_name: str, trytimes=6) -> dict:
     if trytimes == 0:
         return ""
     try:
-        base_url = "https://www.r6s.cn/Stats?username="
-        url = base_url + str(user_name) + '&platform='
+        url = f"https://www.r6s.cn/Stats?username={user_name}&platform="
         headers = {
             'Host': 'www.r6s.cn',
             'referer': 'https://www.r6s.cn',
@@ -35,13 +34,11 @@ async def get_data_from_r6scn(user_name: str, trytimes=6) -> dict:
 
 async def get_data_from_r6sground(user_name: str) -> dict:
     async with httpx.AsyncClient() as client:
-        resp = await client.get("https://global.r6sground.cn/stats/%s/data" % user_name)
+        resp = await client.get(f"https://global.r6sground.cn/stats/{user_name}/data")
     datas = re.split(r"(data: )", resp.text)
     rdatas = {}
     for d in datas:
-        if d[:1] != "{":
-            pass
-        else:
+        if d[:1] == "{":
             d = d.replace("!46$", "false")
             d = d.replace("!47$", "true")
             d_jdson = json.loads(d)

@@ -72,9 +72,7 @@ class GeneralStat(DataStruct):
         self.__dict__.update(data)
 
     def kd(self) -> str:
-        if self.deaths == 0:
-            return "∞"
-        return f"{self.kills / self.deaths:.2f}"
+        return "∞" if self.deaths == 0 else f"{self.kills / self.deaths:.2f}"
 
     def win_rate(self) -> str:
         return f"{self.won / self.played * 100:.2f}%"
@@ -99,16 +97,12 @@ class CRStat(DataStruct):
     def kd(self) -> str:
         if not hasattr(self, "deaths"):
             return "Unkown"
-        if self.deaths == 0:
-            return "∞"
-        return f"{self.kills / self.deaths:.2f}"
+        return "∞" if self.deaths == 0 else f"{self.kills / self.deaths:.2f}"
 
     def win_rate(self) -> str:
         if not hasattr(self, "played"):
             return "Unkown"
-        if self.played == 0:  # 不明原因
-            return "-"
-        return f"{self.won / self.played * 100:.2f}%"
+        return "-" if self.played == 0 else f"{self.won / self.played * 100:.2f}%"
 
 
 class OperatorStat(DataStruct):
@@ -125,14 +119,10 @@ class OperatorStat(DataStruct):
         self.played = self.won + self.lost
 
     def kd(self) -> str:
-        if self.deaths == 0:
-            return "∞"
-        return f"{self.kills / self.deaths:.2f}"
+        return "∞" if self.deaths == 0 else f"{self.kills / self.deaths:.2f}"
 
     def win_rate(self) -> str:
-        if self.played == 0:
-            return "-"
-        return f"{self.won / self.played * 100:.2f}"
+        return "-" if self.played == 0 else f"{self.won / self.played * 100:.2f}"
 
 
 class Player(DataStruct):
@@ -173,38 +163,28 @@ class Player(DataStruct):
                 r = await client.get(avataUrl)
                 return r.content
         except:
-            if retry_times < 3:
-                return await self.get_avatar(retry_times + 1)
-            else:
-                return None
+            return await self.get_avatar(retry_times + 1) if retry_times < 3 else None
 
     def casual_rank(self) -> int:
         return rank(self.casual_stat.mmr)
 
     def ranked_rank(self) -> Optional[int]:
-        if hasattr(self.ranked_stat, "mmr"):
-            return rank(self.ranked_stat.mmr)
-        else:
-            return 0
+        return rank(self.ranked_stat.mmr) if hasattr(self.ranked_stat, "mmr") else 0
 
 
 def rank(mmr: float) -> int:
     mmr = int(mmr)
     rank = 0
     if mmr < 1000:
-        rank = 0
+        return 0
     elif mmr < 2600:
-        rank = mmr // 100 - 10
+        return mmr // 100 - 10
     elif mmr < 3200:
-        rank = mmr // 200 + 3
-    # elif mmr < 4100:
-    #     rank = mmr // 400 + 11
-    # 与最新版本的段位间隔相符
+        return mmr // 200 + 3
     elif mmr < 5000:
-        rank = (mmr + 100) // 300 + 8
+        return (mmr + 100) // 300 + 8
     else:
-        rank = 25
-    return rank
+        return 25
 
 
 def new_player_from_r6scn(data: Dict) -> Player:
