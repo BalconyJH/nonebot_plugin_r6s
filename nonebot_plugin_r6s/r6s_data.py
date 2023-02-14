@@ -1,26 +1,31 @@
+from datetime import datetime
+
 import httpx
 import asyncio
 
 
 def rank(mmr: int) -> str:
-    head = ["紫铜", "黄铜", "白银", "黄金", "白金", "钻石", "冠军"]
-    feet2 = ["III", "II", "I"]
-    if mmr < 2600:
-        mmrd = int(mmr // 100 - 11)
-        feet1 = ["V", "IV", "III", "II", "I"]
-        if mmrd < 5:
-            return head[0] + feet1[mmrd]
-        elif mmrd < 10:
-            return head[1] + feet1[mmrd-5]
-        else:
-            return head[2] + feet1[mmrd-10]
-    elif mmr < 4400:
-        mmrd = int(mmr // 200 - 13)
-        return head[3] + feet2[mmrd] if mmrd < 3 else head[4] + feet2[(mmrd-3)//2]
-    elif mmr < 5000:
-        return head[-2]
-    else:
-        return head[-1]
+    if mmr > 4000:
+        return "冠军"
+    rank_tiers = {
+        500: "紫铜",
+        1000: "黄铜",
+        1500: "白银",
+        2000: "黄金",
+        2500: "白金",
+        3000: "翡翠",
+        3500: "钻石",
+    }
+    tier = next(key for key in rank_tiers if key > mmr)
+    rank_division = {
+        0: "V",
+        100: "IV",
+        200: "III",
+        300: "II",
+        400: "I"
+    }
+    division = next(key for key in rank_division if key > mmr % 500)
+    return rank_tiers[tier] + rank_division[division]
 
 
 async def get_data(usr_name: str, trytimes=6) -> dict:
@@ -122,11 +127,7 @@ def operators(data: dict) -> str:
 
 
 def gen_play(data: dict) -> str:
-    update_at_date = [
-        str(data["update_at"]["year"]+1900),
-        str(data["update_at"]["month"]+1),
-        str(data["update_at"]["date"]),
-    ]
+    last_rank_time = datetime.fromtimestamp(data["time"] / 1000.0).strftime('%Y-%m-%d %H:%M:%S.%f')
     update_at_time = [
         str(data["update_at"]["hours"]),
         str(data["update_at"]["minutes"])

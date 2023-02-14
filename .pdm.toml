@@ -1,0 +1,5 @@
+[python]
+path = "C:\\Users\\10912\\Documents\\Github\\nonebot_plugin_r6s\\.venv\\Scripts\\python.exe"
+
+[pypi]
+verify_ssl = false
