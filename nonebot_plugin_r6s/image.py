@@ -105,6 +105,7 @@ async def detail_image(player: Player) -> IMG:
             if has_rank
             else Image.open(rank_img_path(rank(stat.mmr))).resize((150, 150))
         )
+
         paste_with_alpha(img, ranked_rank, (20, offset + 20))
         # draw.rounded_rectangle(
         #     [10, offset + 10, 790, offset + 190], radius=5, outline='black', width=2)

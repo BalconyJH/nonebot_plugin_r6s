@@ -172,19 +172,28 @@ class Player(DataStruct):
         return rank(self.ranked_stat.mmr) if hasattr(self.ranked_stat, "mmr") else 0
 
 
-def rank(mmr: float) -> int:
-    mmr = int(mmr)
-    rank = 0
-    if mmr < 1000:
-        return 0
-    elif mmr < 2600:
-        return mmr // 100 - 10
-    elif mmr < 3200:
-        return mmr // 200 + 3
-    elif mmr < 5000:
-        return (mmr + 100) // 300 + 8
-    else:
-        return 25
+def rank(mmr: int) -> str:
+    if mmr > 4500:
+        return "冠军"
+    rank_tiers = {
+        1000: "紫铜",
+        1500: "黄铜",
+        2000: "白银",
+        2500: "黄金",
+        3000: "白金",
+        3500: "翡翠",
+        4000: "钻石",
+    }
+    tier = next((key for key in rank_tiers if key >= mmr), max(rank_tiers))
+    rank_division = {
+        100: "V",
+        200: "IV",
+        300: "III",
+        400: "II",
+        500: "I"
+    }
+    division = next((key for key in rank_division if key > mmr % tier), max(rank_division))
+    return rank_tiers[tier] + rank_division[division]
 
 
 def new_player_from_r6scn(data: Dict) -> Player:
