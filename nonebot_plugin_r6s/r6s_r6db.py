@@ -1,3 +1,4 @@
+import httpx
 def rank(mmr: int) -> str:
     head = ["紫铜", "黄铜", "白银", "黄金", "白金", "钻石", "冠军"]
     feet2 = ["III", "II", "I"]
@@ -19,9 +20,103 @@ def rank(mmr: int) -> str:
         return head[-1]
 
 
-def con(*args) -> str:
-    r = "".join(arg + "\n" for arg in args)
-    return r[:-1]
+def second_to_miniutesecond(seconds: int) -> str:
+    """
+    将秒数转换为格式化的分钟和秒数。
+
+    参数：
+    sec：要转换的秒数，可以是整数或浮点数。
+
+    返回：
+    格式化的分钟和秒数的字符串，格式为“H.MM”。
+
+    示例：
+    >>> sec_to_minsec(3600)
+    '1.00H'
+    >>> sec_to_minsec(1500)
+    '0.25H'
+    """
+    minutes, _ = divmod(seconds, 60)
+    hours, minutes = divmod(int(minutes), 60)
+    one_min = "%.2f" % (minutes / 60)
+    return f"{hours:1d}.{one_min[2]}H"
+
+
+def division_zero(a, b):
+    return a / b if b else 0
+
+
+async def get_user_avatar(user_id: str, retries: int = 3):
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.get(data["payload"]["user"]["avatar"], timeout=15)
+            return r.json()["payload"]["avatar_url"]
+
+
+async def basicinfo(data: dict) -> dict:
+    return {
+        "nickname": data["payload"]["user"]["nickname"],
+        "level": data["payload"]["stats"]["progression"]["level"],
+        "time": second_to_miniutesecond(
+            data["payload"]["stats"]["general"]["timeplayed"]
+        ),
+        "mmr": data["payload"]["stats"]["seasonal"]["ranked"]["mmr"],
+    }
+
+
+async def get_record(data: dict) -> dict:
+    general_stats = data["payload"]["stats"]["general"]
+    kills, deaths, matchesplayed, assists, wins, losses, knockdown, gadget_destroy = (
+        general_stats["kills"],
+        general_stats["deaths"],
+        general_stats["matchesplayed"],
+        general_stats["assists"],
+        general_stats["wins"],
+        general_stats["losses"],
+        general_stats["knockdown"],
+        general_stats["gadget_destroy"],
+    )
+
+    kd = division_zero(kills, deaths)
+    wl = division_zero(wins, losses)
+    kpm = division_zero(kills, matchesplayed)
+
+    return {
+        "kills": kills,
+        "deaths": deaths,
+        "matchesplayed": matchesplayed,
+        "assists": assists,
+        "wins": wins,
+        "losses": losses,
+        "kd": kd,
+        "wl": "%.2f" % wl,
+        "kpm": "%.2f" % kpm,
+        "knockdown": knockdown,
+        "gadget_destroy": gadget_destroy,
+    }
+
+
+async def get_operator(data: dict) -> dict:
+    operators = data["payload"]["stats"]["operators"].copy()
+    most_played = sorted(operators, key=lambda l1: l1["timeplayed"], reverse=True)[0]
+    best_kd = sorted(
+        operators,
+        key=lambda l2: (division_zero(l2["kills"], l2["deaths"]), l2["timeplayed"]),
+        reverse=True,
+    )[0]
+    best_wl = sorted(
+        operators,
+        key=lambda l3: (division_zero(l3["wins"], l3["losses"]), l3["timeplayed"]),
+        reverse=True,
+    )[0]
+    return {
+        "most_played": most_played,
+        "best_kd": best_kd,
+        "best_wl": best_wl,
+    }
+# def con(*args) -> str:
+#     r = "".join(arg + "\n" for arg in args)
+#     return r[:-1]
 
 
 def gen_stat(data: dict) -> str:

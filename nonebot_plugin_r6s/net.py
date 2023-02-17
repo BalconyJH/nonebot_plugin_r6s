@@ -9,31 +9,6 @@ AUTH = (get_driver().config.r6db_user_id, get_driver().config.r6db_password)
 
 
 async def get_data_from_r6scn(user_name: str) -> dict:
-    # if trytimes == 0:
-    #     return ""
-    # try:
-    #     url = f"https://www.r6s.cn/Stats?username={user_name}&platform="
-    #     #     headers = {
-    #     #         'Host': 'www.r6s.cn',
-    #     #         'referer': 'https://www.r6s.cn',
-    #     #         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
-    #     #         'x-requested-with': 'XMLHttpRequest'
-    #     #     }
-    #     async with httpx.AsyncClient() as client:
-    #         response = await client.get(url, headers=headers)
-    #     if not response.json() and trytimes == 1:
-    #         return "Not Found"
-    #     r: dict = response.json()
-    #     if not (r.get("username") or r.get("StatCR")):
-    #         trytimes -= 1
-    #         await asyncio.sleep(0.5)
-    #         r = await get_data_from_r6scn(user_name, trytimes=trytimes)
-    #     return r
-    # except:
-    #     trytimes -= 1
-    #     await asyncio.sleep(0.5)
-    #     r = await get_data_from_r6scn(user_name, trytimes=trytimes)
-    #     return r
     url = "https://api.r6s.cn/apistats/stats/getprofilesbyuplayname"
     # url_base_on_userid = "https://api.r6s.cn/apistats/stats/fullstats" # 使用userid进行查询,作为备用接口
     headers = {
@@ -92,11 +67,11 @@ async def get_data_from_r6db(user_name: str) -> dict:
     elif resp.status_code == 404:
         raise ConnectionError(f"")
     elif resp.status_code == 401:
-        logger.warning(f"请在.env文件填写正确的r6db_user_id和r6db_password")
+        logger.warning("请在.env文件填写正确的r6db_user_id和r6db_password")
         raise ConnectionError({"error": "Not authorized"})
     elif resp.status_code == 429:
         logger.warning("API达到请求上限")
-        raise ConnectionRefusedError(f"API request limit reached")
+        raise ConnectionRefusedError("API request limit reached")
     else:
         return {user_name: f"{user_name}", "error": "Error"}
 
