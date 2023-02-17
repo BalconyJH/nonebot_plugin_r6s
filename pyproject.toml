@@ -30,22 +30,15 @@ includes = []
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
 
-
 [project]
 name = "nonebot_plugin_r6s"
 version = "0.4.2"
 description = "A R6s plugin for Nonebot2"
 authors = [
-    {name = "BalconyJH", email = "balconyjh@gmail.com"},
+    {name = "BalconyJH", email = "73932916+BalconyJH@users.noreply.github.com"},
     {name = "abrahumlink",email = "307887491@qq.com"},
 ]
-dependencies = [
-    "nonebot2[fastapi]>=2.0.0b5",
-    "nonebot-adapter-onebot<3.0.0.0,>=2.0.0-beta.1",
-    "ujson<6.0.0,>=4.0.2",
-    "httpx<1.0.0,>=0.21.1",
-    "Pillow<10.0,>=8.4",
-]
+dependencies = ["nonebot2<3.0.0.0,>=2.0.0-beta.1", "nonebot-adapter-onebot<3.0.0.0,>=2.0.0-beta.1", "ujson<6.0.0,>=4.0.2", "httpx<1.0.0,>=0.21.1", "Pillow<10.0,>=8.4"]
 requires-python = ">=3.7.3,<4.0"
 license = {text = "GPLv3"}
 readme = "README.md"

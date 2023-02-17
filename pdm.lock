@@ -147,16 +147,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nonebot2"
-version = "2.0.0b5"
-extras = ["fastapi"]
-requires_python = ">=3.7.3,<4.0.0"
-summary = "An asynchronous python bot framework."
-dependencies = [
-    "nonebot2==2.0.0b5",
-]
-
-[[package]]
 name = "pillow"
 version = "9.4.0"
 requires_python = ">=3.7"
@@ -322,7 +312,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:ee5f4ff4c5afd3f876f0644c039e5f87597eaa2f13c2750f15805a658408e97a"
+content_hash = "sha256:916405f2e65597ffa90e8e21daa8c6e4d97fd77104aabe9b2ce64dfc306f4781"
 
 [metadata.files]
 "anyio 3.6.2" = [
