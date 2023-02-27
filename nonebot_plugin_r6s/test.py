@@ -1,65 +1,63 @@
-import asyncio
+from PIL import Image, ImageDraw, ImageFont
+from textwrap import TextWrapper
+from pathlib import Path
 
-import httpx
-
-
-async def get_data_from_r6scn(user_name: str, trytimes=6) -> dict:
-    # if trytimes == 0:
-    #     return ""
-    # try:
-    #     url = f"https://www.r6s.cn/Stats?username={user_name}&platform="
-    #     headers = {
-    #         'Host': 'www.r6s.cn',
-    #         'referer': 'https://www.r6s.cn',
-    #         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
-    #         'x-requested-with': 'XMLHttpRequest'
-    #     }
-    #     async with httpx.AsyncClient() as client:
-    #         response = await client.get(url, headers=headers)
-    #     if not response.json() and trytimes == 1:
-    #         return "Not Found"
-    #     r: dict = response.json()
-    #     if not (r.get("username") or r.get("StatCR")):
-    #         trytimes -= 1
-    #         await asyncio.sleep(0.5)
-    #         r = await get_data_from_r6scn(user_name, trytimes=trytimes)
-    #     return r
-    # except:
-    #     trytimes -= 1
-    #     await asyncio.sleep(0.5)
-    #     r = await get_data_from_r6scn(user_name, trytimes=trytimes)
-    #     return r
-    url = "https://api.r6s.cn/apistats/stats/getprofilesbyuplayname"
-    headers = {
-        'User-Agent': 'PostmanRuntime/7.30.0',
-        'Referer': 'https://test.r6s.cn',
-        'Accept': '*/*',
-        'Host': 'api.r6s.cn',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-    data = {
-        "params": user_name
-    }
-
-    try:
-        session = httpx.AsyncClient(trust_env=True)
-        response = await session.post(url, headers=headers, data=data)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"API returned status code {response.status_code}")
-    except Exception as e:
-        raise Exception(f"Request failed: {str(e)}") from e
+image = Image.new("RGB", (1000, 1000), color=(255, 255, 255))
+draw = ImageDraw.Draw(image)
+RESOURCE_PATH = Path(__file__).parent
+FONT = RESOURCE_PATH / "fonts" / "sarasa-mono-sc-nerd.ttc"
+font_sizes = [46, 40, 32, 30, 24, 28, 24, 20]
 
 
-# get_data_from_r6scn(user_name="BalconyJH")
-def main():
-    loop = asyncio.get_event_loop()
-    task = get_data_from_r6scn(user_name="BalconyJH")
+class Font:
+    def __init__(self, font_file, size: int):
+        self.font = ImageFont.truetype(font_file, size)
 
-    print(loop.run_until_complete(task))
+    def __call__(self):
+        return self.font
 
 
-if __name__ == '__main__':
-    main()
+# 使用列表推导式生成字体对象
+font_objects = {
+    f"font_{size}": ImageFont.truetype(str(FONT), size) for size in font_sizes
+}
+
+# 通过名称访问相应的字体对象
+font_46 = font_objects["font_46"]
+font_40 = font_objects["font_40"]
+font_32 = font_objects["font_32"]
+font_30 = font_objects["font_30"]
+font_24 = font_objects["font_24"]
+font_28 = font_objects["font_28"]
+font_20 = font_objects["font_20"]
+
+
+text = """\
+场均击杀最高段位当前段位助攻
+胜率胜场负场游戏局数
+爆头击倒破坏K/D"""
+
+# 创建画布和字体
+image = Image.new('RGB', (500, 500), color=(255, 255, 255))
+draw = ImageDraw.Draw(image)
+
+# 将文本拆分为行和单词
+lines = text.split('\n')
+words = [line.split() for line in lines]
+
+# 计算文本的宽度和高度
+line_height = font_20.getsize(lines[0])[1] + 70  # 行高为字体高度加上70
+max_word_widths = [max(font_20.getsize(word)[0] for word in line) for line in words]
+x_offsets = [sum(max_word_widths[:i]) + i * 20 for i in range(len(max_word_widths))]
+y = 10
+
+# 在画布上绘制文本
+for i, line in enumerate(words):
+    x = x_offsets[i]
+    for word in line:
+        draw.text((x, y), word, (150, 150, 150), font=font_20)
+        x += max_word_widths[i] + 20
+    y += line_height
+
+
+image.show()
