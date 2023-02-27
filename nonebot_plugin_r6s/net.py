@@ -3,7 +3,8 @@ import asyncio
 import re
 import json
 
-from nonebot import get_driver, logger
+from nonebot import get_driver
+from nonebot.log import logger
 
 AUTH = (get_driver().config.r6db_user_id, get_driver().config.r6db_password)
 
@@ -51,12 +52,12 @@ async def get_data_from_r6sground(user_name: str) -> dict:
     return rdatas
 
 
-async def get_data_from_r6stats(user_name: str) -> dict:
-    # parse user_name to ubi_id first
-    ubi_id = user_name  # todo
-    async with httpx.AsyncClient() as client:
-        resp = await client.get("https://r6stats.com/api/stats/{ubi_id}?queue=true")
-    # todo
+# async def get_data_from_r6stats(user_name: str) -> dict:
+#     # parse user_name to ubi_id first
+#     ubi_id = user_name  # todo
+#     async with httpx.AsyncClient() as client:
+#         resp = await client.get("https://r6stats.com/api/stats/{ubi_id}?queue=true")
+#     # todo
 
 
 async def get_data_from_r6db(user_name: str) -> dict:
@@ -75,4 +76,12 @@ async def get_data_from_r6db(user_name: str) -> dict:
     else:
         return {user_name: f"{user_name}", "error": "Error"}
 
+
+async def get_data_from_r6racker(user_name: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f"https://r6racker.com/api/player/{user_name}")
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        return {user_name: f"{user_name}", "error": "Not Found"}
 
