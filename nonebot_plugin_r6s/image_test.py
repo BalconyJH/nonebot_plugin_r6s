@@ -224,23 +224,12 @@ async def draw_r6(nick_name: str):
             return print(f"查询失败：{resp.status_code}")
 
     # 背景图
-    hight = 1502
-    bg = IMG.new("RGB", (800, hight), (200, 200, 200))
-    draw = ImageDraw.Draw(bg)
-
-    # 渐变背景
-    bg_color_form = (80, 80, 80)
-    bg_color_to = (40, 40, 40)
-    step_r = (bg_color_to[0] - bg_color_form[0]) / hight
-    step_g = (bg_color_to[1] - bg_color_form[1]) / hight
-    step_b = (bg_color_to[2] - bg_color_form[2]) / hight
-    for y in range(hight + 1):
-        bg_r = round(bg_color_form[0] + step_r * y)
-        bg_g = round(bg_color_form[1] + step_g * y)
-        bg_b = round(bg_color_form[2] + step_b * y)
-        for x in range(hight):
-            draw.point((x, y), fill=(bg_r, bg_g, bg_b))
-
+    background = horizontal_linear_gradient((80, 80,80), (40,40,40), 800, 635)
+    draw = ImageDraw.Draw(background)
+    # 战绩板背景
+    record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
+    circle_record_background = circle_corner(record_background, [12])
+    background.paste(circle_record_background, (40, 215), circle_record_background)
     # 用户基本信息
 
     for _ in range(3):
@@ -251,7 +240,7 @@ async def draw_r6(nick_name: str):
                 avatar = IMG.open(BytesIO(avatar.content))
                 avatar.thumbnail((128, 128))
                 circle_avatar = circle_corner(avatar, [20])
-                bg.paste(circle_avatar, (40, 40), circle_avatar)
+                background.paste(circle_avatar, (40, 40), circle_avatar)
                 break
             else:
                 # logger.error(f"头像下载失败：{nick_name}")
@@ -273,10 +262,10 @@ async def draw_r6(nick_name: str):
         (200, 200, 200),
         font_28,
     )
-    # 战绩板
-    record_bg = IMG.new("RGB", (720, 380), (26, 27, 31))
-    circle_record_bg = circle_corner(record_bg, [12])
-    bg.paste(circle_record_bg, (40, 215), circle_record_bg)
+    # # 战绩板
+    # record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
+    # circle_record_background = circle_corner(record_background, [12])
+    # background.paste(circle_record_background, (40, 215), circle_record_background)
     draw.text((80, 250), "全局统计", "white", font_30)
 
     draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
@@ -354,79 +343,79 @@ async def draw_r6(nick_name: str):
     )
     draw.text((180 * 4 - 94, 520), kd, "white", font_32)
 
-    # 常用干员
-    most_played = sorted(
-        data["payload"]["stats"]["operators"].copy(),
-        key=lambda l1: l1["timeplayed"],
-        reverse=True,
-    )[0]
-    best_kd = sorted(
-        data["payload"]["stats"]["operators"].copy(),
-        key=lambda l2: (division_zero(l2["kills"], l2["deaths"]), l2["timeplayed"]),
-        reverse=True,
-    )[0]
-    best_wl = sorted(
-        data["payload"]["stats"]["operators"].copy(),
-        key=lambda l3: (division_zero(l3["wins"], l3["losses"]), l3["timeplayed"]),
-        reverse=True,
-    )[0]
+    # # 常用干员
+    # most_played = sorted(
+    #     data["payload"]["stats"]["operators"].copy(),
+    #     key=lambda l1: l1["timeplayed"],
+    #     reverse=True,
+    # )[0]
+    # best_kd = sorted(
+    #     data["payload"]["stats"]["operators"].copy(),
+    #     key=lambda l2: (division_zero(l2["kills"], l2["deaths"]), l2["timeplayed"]),
+    #     reverse=True,
+    # )[0]
+    # best_wl = sorted(
+    #     data["payload"]["stats"]["operators"].copy(),
+    #     key=lambda l3: (division_zero(l3["wins"], l3["losses"]), l3["timeplayed"]),
+    #     reverse=True,
+    # )[0]
 
-    operator_box1 = IMG.new("RGB", (215, 450), (72, 140, 222))
-    operator_box2 = IMG.new("RGB", (215, 450), (66, 127, 109))
-    operator_box3 = IMG.new("RGB", (215, 450), (212, 134, 30))
-    operator_figure1 = await get_pic("operators", most_played["id"])
-    operator_figure2 = await get_pic("operators", best_kd["id"])
-    operator_figure3 = await get_pic("operators", best_wl["id"])
-    if operator_figure1 == "Error":
-        operator_figure1 = IMG.open("assets/operators/unknown.png")
-    if operator_figure2 == "Error":
-        operator_figure2 = IMG.open("assets/operators/unknown.png")
-    if operator_figure3 == "Error":
-        operator_figure3 = IMG.open("assets/operators/unknown.png")
-    operator_figure1.thumbnail((600, 850))
-    operator_figure2.thumbnail((600, 850))
-    operator_figure3.thumbnail((600, 850))
-    operator_box1.paste(operator_figure1, (-145, 75), operator_figure1)
-    operator_box2.paste(operator_figure2, (-145, 75), operator_figure2)
-    operator_box3.paste(operator_figure3, (-145, 75), operator_figure3)
-    circle_operator_box1 = circle_corner(operator_box1, [12])
-    circle_operator_box2 = circle_corner(operator_box2, [12])
-    circle_operator_box3 = circle_corner(operator_box3, [12])
-    bg.paste(circle_operator_box1, (40, 635), circle_operator_box1)
-    bg.paste(circle_operator_box2, (294, 635), circle_operator_box2)
-    bg.paste(circle_operator_box3, (545, 635), circle_operator_box3)
+    # operator_box1 = IMG.new("RGB", (215, 450), (72, 140, 222))
+    # operator_box2 = IMG.new("RGB", (215, 450), (66, 127, 109))
+    # operator_box3 = IMG.new("RGB", (215, 450), (212, 134, 30))
+    # operator_figure1 = await get_pic("operators", most_played["id"])
+    # operator_figure2 = await get_pic("operators", best_kd["id"])
+    # operator_figure3 = await get_pic("operators", best_wl["id"])
+    # if operator_figure1 == "Error":
+    #     operator_figure1 = IMG.open("assets/operators/unknown.png")
+    # if operator_figure2 == "Error":
+    #     operator_figure2 = IMG.open("assets/operators/unknown.png")
+    # if operator_figure3 == "Error":
+    #     operator_figure3 = IMG.open("assets/operators/unknown.png")
+    # operator_figure1.thumbnail((600, 850))
+    # operator_figure2.thumbnail((600, 850))
+    # operator_figure3.thumbnail((600, 850))
+    # operator_box1.paste(operator_figure1, (-145, 75), operator_figure1)
+    # operator_box2.paste(operator_figure2, (-145, 75), operator_figure2)
+    # operator_box3.paste(operator_figure3, (-145, 75), operator_figure3)
+    # circle_operator_box1 = circle_corner(operator_box1, [12])
+    # circle_operator_box2 = circle_corner(operator_box2, [12])
+    # circle_operator_box3 = circle_corner(operator_box3, [12])
+    # background.paste(circle_operator_box1, (40, 635), circle_operator_box1)
+    # background.paste(circle_operator_box2, (294, 635), circle_operator_box2)
+    # background.paste(circle_operator_box3, (545, 635), circle_operator_box3)
 
-    draw.text((65, 652), "时长最长", "white", font_40)
-    draw.text((319, 652), "最佳战绩", "white", font_40)
-    draw.text((571, 652), "最佳胜率", "white", font_40)
+    # draw.text((65, 652), "时长最长", "white", font_40)
+    # draw.text((319, 652), "最佳战绩", "white", font_40)
+    # draw.text((571, 652), "最佳胜率", "white", font_40)
 
-    draw.text((66, 705), most_played["id"].upper(), "white", font_24)
-    draw.text((320, 705), best_kd["id"].upper(), "white", font_24)
-    draw.text((572, 705), best_wl["id"].upper(), "white", font_24)
+    # draw.text((66, 705), most_played["id"].upper(), "white", font_24)
+    # draw.text((320, 705), best_kd["id"].upper(), "white", font_24)
+    # draw.text((572, 705), best_wl["id"].upper(), "white", font_24)
 
-    draw.text((65, 737), sec_to_minsec(most_played["timeplayed"]), "white", font_32)
-    draw.text(
-        (319, 737),
-        str(
-            "%.2f"
-            % division_zero(
-                best_kd["kills"], best_kd["deaths"] if best_kd["deaths"] != 0 else 1
-            )
-        ),
-        "white",
-        font_32,
-    )
-    draw.text(
-        (571, 737),
-        str("%.2f%%" % (division_zero(best_wl["wins"], best_wl["roundsplayed"]) * 100)),
-        "white",
-        font_32,
-    )
+    # draw.text((65, 737), sec_to_minsec(most_played["timeplayed"]), "white", font_32)
+    # draw.text(
+    #     (319, 737),
+    #     str(
+    #         "%.2f"
+    #         % division_zero(
+    #             best_kd["kills"], best_kd["deaths"] if best_kd["deaths"] != 0 else 1
+    #         )
+    #     ),
+    #     "white",
+    #     font_32,
+    # )
+    # draw.text(
+    #     (571, 737),
+    #     str("%.2f%%" % (division_zero(best_wl["wins"], best_wl["roundsplayed"]) * 100)),
+    #     "white",
+    #     font_32,
+    # )
 
     # 常用武器
-    weapon_bg = IMG.new("RGB", (720, 330), (26, 27, 31))
-    circle_weapon_bg = circle_corner(weapon_bg, [12])
-    bg.paste(circle_weapon_bg, (40, 1130), circle_weapon_bg)
+    weapon_background = IMG.new("RGB", (720, 330), (26, 27, 31))
+    circle_weapon_background = circle_corner(weapon_background, [12])
+    background.paste(circle_weapon_background, (40, 1130), circle_weapon_background)
     draw.text((80, 1165), "最常用的武器", "white", font_30)
 
     weapons = sorted(
@@ -438,7 +427,7 @@ async def draw_r6(nick_name: str):
     if weapons_image == "Error":
         weapons_image = IMG.open("assets/weapons/unknown.png")
     weapons_image_inverted = inverted_image(weapons_image)
-    bg.paste(
+    background.paste(
         weapons_image_inverted,
         (550 - (weapons_image.size[0] // 2), 1265 - (weapons_image.size[1] // 2)),
         weapons_image_inverted,
@@ -456,9 +445,9 @@ async def draw_r6(nick_name: str):
     draw.text((554, 1380), str(weapon_kd), "white", font_32)
 
     bio = BytesIO()
-    bg.save(bio, "JPEG")
+    background.save(bio, "JPEG")
 
-    return bg.show()
+    return background.show()
 
 
 def main():
