@@ -6,9 +6,10 @@ from PIL.Image import Image
 from PIL import Image as IMG
 from PIL import ImageDraw, ImageFont, ImageOps, ImageFilter
 import httpx
-import numpy as np
 from typing import List, Union
 import cProfile
+
+from nonebot import logger
 
 start_time = time.time()
 AUTH = ("1749739643927884", "753a3649075db01a1100aade02713531")
@@ -17,6 +18,7 @@ proxies = {
     "https://": "http://localhost:10809",
 }
 RESOURCE_PATH = Path(__file__).parent
+DEFAULT_AVATAR = RESOURCE_PATH / "imgs" / "default_avatar.png"
 FONT = RESOURCE_PATH / "fonts" / "sarasa-mono-sc-nerd.ttc"
 font_sizes = [46, 40, 32, 30, 24, 28, 24, 20]
 
@@ -47,7 +49,6 @@ text_info = """\
 场均击杀          击杀              死亡              助攻
 胜率              胜场              负场              游戏局数
 爆头              击倒              破坏              K/D"""
-
 
 
 def horizontal_linear_gradient(start_color, end_color, width, height) -> Image:
@@ -83,19 +84,19 @@ def sec_to_minsec(sec):
     return f"{hours:1d}.{one_min[2]}H"
 
 
-def smooth_image(image: Image, radius: float) -> Image:
-    """
-    平滑图片，消除锯齿效果
-    """
-    kernel_size = int(radius * 2) + 1
-    kernel = np.ones((kernel_size, kernel_size), np.float32) / (kernel_size * kernel_size)
-    image_array = np.array(image)
-    r = np.convolve(kernel, image_array[:, :, 0].flatten(), mode='same').reshape(image_array.shape[:2])
-    g = np.convolve(kernel, image_array[:, :, 1].flatten(), mode='same').reshape(image_array.shape[:2])
-    b = np.convolve(kernel, image_array[:, :, 2].flatten(), mode='same').reshape(image_array.shape[:2])
-    smoothed_array = np.stack([r, g, b], axis=-1)
-    smoothed_array = np.clip(smoothed_array, 0, 255).astype(np.uint8)
-    return IMG.fromarray(smoothed_array)
+# def smooth_image(image: Image, radius: float) -> Image:
+#     """
+#     平滑图片，消除锯齿效果
+#     """
+#     kernel_size = int(radius * 2) + 1
+#     kernel = np.ones((kernel_size, kernel_size), np.float32) / (kernel_size * kernel_size)
+#     image_array = np.array(image)
+#     r = np.convolve(kernel, image_array[:, :, 0].flatten(), mode='same').reshape(image_array.shape[:2])
+#     g = np.convolve(kernel, image_array[:, :, 1].flatten(), mode='same').reshape(image_array.shape[:2])
+#     b = np.convolve(kernel, image_array[:, :, 2].flatten(), mode='same').reshape(image_array.shape[:2])
+#     smoothed_array = np.stack([r, g, b], axis=-1)
+#     smoothed_array = np.clip(smoothed_array, 0, 255).astype(np.uint8)
+#     return IMG.fromarray(smoothed_array)
 
 
 def circle_corner(img: Image, radii: List[int]) -> Image:
@@ -176,10 +177,6 @@ async def get_pic(type: str, name: str):
     >>> get_pic("weapons", "ak47")
     <PIL.Image.Image image mode=RGBA size=...>
     """
-    proxies = {
-        "http://": "http://localhost:10809",
-        "https://": "http://localhost:10809",
-    }
     PICPATH = RESOURCE_PATH.joinpath(type, f"{name}.png")
     if PICPATH.exists():
         with PICPATH.open(mode="rb") as f:
@@ -207,22 +204,6 @@ async def get_pic(type: str, name: str):
 
 
 async def draw_r6(nick_name: str):
-    proxy_dict = {}
-    for protocol, proxy_url in proxies.items():
-        proxy = httpx.Proxy(url=proxy_url)
-        proxy_dict[protocol] = proxy
-    async with httpx.AsyncClient(
-        timeout=10, auth=AUTH, follow_redirects=True, proxies=proxy_dict
-    ) as client:
-        resp = await client.get(f"https://api.statsdb.net/r6/pc/player/{nick_name}")
-
-        if resp.status_code == 200:
-            data = resp.json()
-        elif resp.status_code == 404:
-            return print(f"未搜索到该昵称：{nick_name}")
-        else:
-            return print(f"查询失败：{resp.status_code}")
-
     # 背景图
     background = horizontal_linear_gradient((80, 80,80), (40,40,40), 800, 635)
     draw = ImageDraw.Draw(background)
@@ -242,10 +223,16 @@ async def draw_r6(nick_name: str):
                 circle_avatar = circle_corner(avatar, [20])
                 background.paste(circle_avatar, (40, 40), circle_avatar)
                 break
+            if avatar.status_code == 429:
+                logger.warning("达到api limit")
             else:
                 # logger.error(f"头像下载失败：{nick_name}")
                 continue
         except httpx.HTTPError:
+            default_avatar = IMG.open(RESOURCE_PATH.joinpath("default_avatar.png"))
+            avatar.thumbnail((128, 128))
+            circle_avatar = circle_corner(avatar, [20])
+            background.paste(circle_avatar, (40, 40), circle_avatar)
             print(f"头像下载失败：{nick_name}")
     draw.text(
         (220, 50),
