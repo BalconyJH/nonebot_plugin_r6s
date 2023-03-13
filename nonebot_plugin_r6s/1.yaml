@@ -1,0 +1,93 @@
+{
+  'default': [
+    {
+      'label': 'avatar_url',
+      'value': 'https://ubisoft-avatars.akamaized.net/4f3faa88-568b-475c-a382-a986a2181cb7/default_256_256.png'
+    },
+    {
+      'label': 'user_id',
+      'value': 'Juelee.PIG'
+    },
+    {
+      'label': 'Best MMR',
+      'value': '4,159'
+    },
+    {
+      'label': 'Level',
+      'value': '258'
+    },
+    {
+      'label': 'Avg Seasonal MMR',
+      'value': '3,444'
+    },
+    {
+      'label': 'Wins',
+      'value': '3,134'
+    },
+    {
+      'label': 'Win %',
+      'value': '59.4%'
+    },
+    {
+      'label': 'Kills',
+      'value': '16,070'
+    },
+    {
+      'label': 'KD',
+      'value': '1.10'
+    },
+    {
+      'label': 'Headshot %',
+      'value': '51.4%'
+    },
+    {
+      'label': 'KD',
+      'value': '1.10'
+    },
+    {
+      'label': 'Deaths',
+      'value': '14,620'
+    },
+    {
+      'label': 'Wins',
+      'value': '3,134'
+    },
+    {
+      'label': 'Losses',
+      'value': '2,106'
+    },
+    {
+      'label': 'Win %',
+      'value': '59.4%'
+    },
+    {
+      'label': 'Time Played',
+      'value': '1,188h'
+    },
+    {
+      'label': 'Matches Played',
+      'value': '5,277'
+    }
+  ],
+  'season': {
+    'Y8S1: Commanding Force': {},
+    'Y7S4: Solar Raid': {
+      'sub_score': '-348',
+      'add_score': '',
+      'K/D': '1.33',
+      'Kills/Match': '3.92',
+      'Win %': '83.05',
+      'MMR': '4,847',
+      'Max MMR': '4,847'
+    },
+    'Y7S3: Brutal Swarm': {
+      'sub_score': '-59',
+      'add_score': '+241',
+      'K/D': '1.19',
+      'Kills/Match': '4.69',
+      'Win %': '66.13',
+      'MMR': '4,159',
+      'Max MMR': '4,159'
+    }
+  }
+}

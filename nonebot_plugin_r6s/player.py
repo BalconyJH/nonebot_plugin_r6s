@@ -9,8 +9,8 @@ class DataStruct:
 
 class BasicStat(DataStruct):
     level: int
-    platform: str
-    region: str  # apac emea ncsa
+    playtime: str
+    mmr: str  # apac emea ncsa
 
     def __init__(self, data: Dict):
         self.__dict__.update(data)
@@ -18,11 +18,13 @@ class BasicStat(DataStruct):
 
 class SeasonRanks(DataStruct):
     # season: str            # 当前赛季
-    season: int  # 赛季数
-    mmr: int  # 最终mmr分数
+    season: str  # 赛季名
+    mmr: int  # 当前mmr分数
     max_mmr: int  # 最高mmr分数
-    wins: int  # 胜场
-    losses: int  # 败场
+    kl: int
+    kd: int
+    add_mmr: int
+    sub_mmr: int
 
     def __init__(self, data: dict):
         self.__dict__.update(data)

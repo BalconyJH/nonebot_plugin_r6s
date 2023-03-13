@@ -18,10 +18,6 @@ def rank(mmr: int) -> str:
 
     返回：
     str: 玩家对应的段位名称。
-
-    示例：
-    >>> rank(3600)
-    '白金III'
     """
     if mmr < 0:
         return "紫铜V"

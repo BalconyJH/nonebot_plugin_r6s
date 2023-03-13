@@ -1,7 +1,9 @@
 import httpx
 import asyncio
+import aiohttp
 import re
 import json
+from typing import Union, Optional
 
 from nonebot import get_driver
 from nonebot.log import logger
@@ -13,16 +15,14 @@ async def get_data_from_r6scn(user_name: str) -> dict:
     url = "https://api.r6s.cn/apistats/stats/getprofilesbyuplayname"
     # url_base_on_userid = "https://api.r6s.cn/apistats/stats/fullstats" # 使用userid进行查询,作为备用接口
     headers = {
-        'User-Agent': 'PostmanRuntime/7.30.0',
-        'Referer': 'https://test.r6s.cn',
-        'Accept': '*/*',
-        'Host': 'api.r6s.cn',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "User-Agent": "PostmanRuntime/7.30.0",
+        "Referer": "https://test.r6s.cn",
+        "Accept": "*/*",
+        "Host": "api.r6s.cn",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded",
     }
-    data = {
-        "params": user_name
-    }
+    data = {"params": user_name}
 
     try:
         session = httpx.AsyncClient(trust_env=True)
@@ -52,21 +52,23 @@ async def get_data_from_r6sground(user_name: str) -> dict:
     return rdatas
 
 
-# async def get_data_from_r6stats(user_name: str) -> dict:
-#     # parse user_name to ubi_id first
-#     ubi_id = user_name  # todo
-#     async with httpx.AsyncClient() as client:
-#         resp = await client.get("https://r6stats.com/api/stats/{ubi_id}?queue=true")
-#     # todo
+async def get_data_from_r6stats(user_name: str) -> dict:
+    # parse user_name to ubi_id first
+    ubi_id = user_name  # todo
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://r6stats.com/api/stats/{ubi_id}?queue=true")
+    # todo
 
 
-async def get_data_from_r6db(user_name: str) -> dict:
-    async with httpx.AsyncClient(timeout=10, auth=AUTH, follow_redirects=True) as client:
+async def get_data_from_r6db(user_name: str) -> Union[dict, str, None]:
+    async with httpx.AsyncClient(
+        timeout=10, auth=AUTH, follow_redirects=True
+    ) as client:
         resp = await client.get(f"https://api.statsdb.net/r6/pc/player/{user_name}")
     if resp.status_code == 200:
         return resp.json()
     elif resp.status_code == 404:
-        raise ConnectionError(f"")
+        return None
     elif resp.status_code == 401:
         logger.warning("请在.env文件填写正确的r6db_user_id和r6db_password")
         raise ConnectionError({"error": "Not authorized"})
@@ -74,14 +76,27 @@ async def get_data_from_r6db(user_name: str) -> dict:
         logger.warning("API达到请求上限")
         raise ConnectionRefusedError("API request limit reached")
     else:
-        return {user_name: f"{user_name}", "error": "Error"}
+        return "Unknown Error"
 
 
-async def get_data_from_r6racker(user_name: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"https://r6racker.com/api/player/{user_name}")
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        return {user_name: f"{user_name}", "error": "Not Found"}
+async def get_data_from_r6racker(user_name: str) -> Optional[dict]:
+    url_list = [
+        f"https://r6.tracker.network/profile/pc/{user_name}",
+        f"https://r6.tracker.network/profile/pc/{user_name}/seasons",
+    ]
 
+    try:
+        async with aiohttp.ClientSession() as session:
+
+            async def fetch(url):
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+                }
+                async with session.get(url, headers=headers) as resp:
+                    resp.raise_for_status()
+                    return await resp.text()
+
+            results = await asyncio.gather(*[fetch(url) for url in url_list])
+            return {"basic_data": results[0], "seasons_data": results[1]}
+    except aiohttp.ClientError:
+        return None
