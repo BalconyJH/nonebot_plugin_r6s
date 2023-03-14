@@ -19,6 +19,7 @@ proxies = {
 }
 RESOURCE_PATH = Path(__file__).parent
 DEFAULT_AVATAR = RESOURCE_PATH / "imgs" / "default_avatar.png"
+CACHE_PATH = RESOURCE_PATH / "cache"
 FONT = RESOURCE_PATH / "fonts" / "sarasa-mono-sc-nerd.ttc"
 font_sizes = [46, 40, 32, 30, 24, 28, 24, 20]
 
@@ -44,11 +45,6 @@ font_30 = font_objects["font_30"]
 font_24 = font_objects["font_24"]
 font_28 = font_objects["font_28"]
 font_20 = font_objects["font_20"]
-
-text_info = """\
-场均击杀          击杀              死亡              助攻
-胜率              胜场              负场              游戏局数
-爆头              击倒              破坏              K/D"""
 
 
 def horizontal_linear_gradient(start_color, end_color, width, height) -> Image:
@@ -203,14 +199,50 @@ async def get_pic(type: str, name: str):
     return IMG.open(BytesIO(r.content)).convert("RGBA")
 
 
-async def draw_r6(nick_name: str):
-    # 背景图
+def init_basic_info():
+    """
+    初始化背景图。
+    """
+    # 底图
     background = horizontal_linear_gradient((80, 80,80), (40,40,40), 800, 635)
     draw = ImageDraw.Draw(background)
+
     # 战绩板背景
     record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
     circle_record_background = circle_corner(record_background, [12])
     background.paste(circle_record_background, (40, 215), circle_record_background)
+
+    # 预设内容
+    draw.text((80, 250), "全局统计", "white", font_30)
+    text_info = """\
+    场均击杀          击杀              死亡              助攻
+    胜率              胜场              负场              游戏局数
+    爆头              击倒              破坏              K/D"""
+    draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
+
+    # 默认头像
+    default_avatar = IMG.open(DEFAULT_AVATAR)
+    default_avatar.thumbnail((128, 128))
+    background.paste(circle_corner(default_avatar, [20]), (40, 40), default_avatar)
+
+    background.save(CACHE_PATH.joinpath("background.png"))
+
+
+async def draw_r6(nick_name: str):
+    # 背景图
+    # background = horizontal_linear_gradient((80, 80,80), (40,40,40), 800, 635)
+    # draw = ImageDraw.Draw(background)
+    # # 战绩板背景
+    # record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
+    # circle_record_background = circle_corner(record_background, [12])
+    # background.paste(circle_record_background, (40, 215), circle_record_background)
+    # # 预设内容
+    # draw.text((80, 250), "全局统计", "white", font_30)
+    # text_info = """\
+    # 场均击杀          击杀              死亡              助攻
+    # 胜率              胜场              负场              游戏局数
+    # 爆头              击倒              破坏              K/D"""
+    # draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
     # 用户基本信息
 
     for _ in range(3):
@@ -254,7 +286,10 @@ async def draw_r6(nick_name: str):
     # circle_record_background = circle_corner(record_background, [12])
     # background.paste(circle_record_background, (40, 215), circle_record_background)
     draw.text((80, 250), "全局统计", "white", font_30)
-
+    text_info = """\
+    场均击杀          击杀              死亡              助攻
+    胜率              胜场              负场              游戏局数
+    爆头              击倒              破坏              K/D"""
     draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
 
     kpm = "%.2f" % division_zero(
