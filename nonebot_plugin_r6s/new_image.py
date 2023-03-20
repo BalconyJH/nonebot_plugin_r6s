@@ -24,27 +24,27 @@ FONT = RESOURCE_PATH / "fonts" / "sarasa-mono-sc-nerd.ttc"
 font_sizes = [46, 40, 32, 30, 24, 28, 24, 20]
 
 
-class Font:
-    def __init__(self, font_file, size: int):
-        self.font = ImageFont.truetype(font_file, size)
-
-    def __call__(self):
-        return self.font
-
-
-# 使用列表推导式生成字体对象
-font_objects = {
-    f"font_{size}": ImageFont.truetype(str(FONT), size) for size in font_sizes
-}
-
-# 通过名称访问相应的字体对象
-font_46 = font_objects["font_46"]
-font_40 = font_objects["font_40"]
-font_32 = font_objects["font_32"]
-font_30 = font_objects["font_30"]
-font_24 = font_objects["font_24"]
-font_28 = font_objects["font_28"]
-font_20 = font_objects["font_20"]
+# class Font:
+#     def __init__(self, font_file, size: int):
+#         self.font = ImageFont.truetype(font_file, size)
+#
+#     def __call__(self):
+#         return self.font
+#
+#
+# # 使用列表推导式生成字体对象
+# font_objects = {
+#     f"font_{size}": ImageFont.truetype(str(FONT), size) for size in font_sizes
+# }
+#
+# # 通过名称访问相应的字体对象
+# font_46 = font_objects["font_46"]
+# font_40 = font_objects["font_40"]
+# font_32 = font_objects["font_32"]
+# font_30 = font_objects["font_30"]
+# font_24 = font_objects["font_24"]
+# font_28 = font_objects["font_28"]
+# font_20 = font_objects["font_20"]
 
 
 def horizontal_linear_gradient(start_color, end_color, width, height) -> Image:
@@ -153,8 +153,8 @@ def inverted_image(image):
         return ImageOps.invert(image)
     r, g, b, a = image.split()
     rgb_image = IMG.merge("RGB", (r, g, b))
-    inverted_image = ImageOps.invert(rgb_image)
-    r2, g2, b2 = inverted_image.split()
+    _inverted_image = ImageOps.invert(rgb_image)
+    r2, g2, b2 = _inverted_image.split()
     return IMG.merge("RGBA", (r2, g2, b2, a))
 
 
@@ -199,12 +199,12 @@ async def get_pic(type: str, name: str):
     return IMG.open(BytesIO(r.content)).convert("RGBA")
 
 
-def init_basic_info():
+def init_basic_info_image():
     """
     初始化背景图。
     """
     # 底图
-    background = horizontal_linear_gradient((80, 80,80), (40,40,40), 800, 635)
+    background = horizontal_linear_gradient((80, 80, 80), (40, 40, 40), 800, 635)
     draw = ImageDraw.Draw(background)
 
     # 战绩板背景
@@ -245,27 +245,27 @@ async def draw_r6(nick_name: str):
     # draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
     # 用户基本信息
 
-    for _ in range(3):
-        try:
-            async with httpx.AsyncClient() as client:
-                avatar = await client.get(data["payload"]["user"]["avatar"], timeout=15)
-            if avatar.status_code == 200:
-                avatar = IMG.open(BytesIO(avatar.content))
-                avatar.thumbnail((128, 128))
-                circle_avatar = circle_corner(avatar, [20])
-                background.paste(circle_avatar, (40, 40), circle_avatar)
-                break
-            if avatar.status_code == 429:
-                logger.warning("达到api limit")
-            else:
-                # logger.error(f"头像下载失败：{nick_name}")
-                continue
-        except httpx.HTTPError:
-            default_avatar = IMG.open(RESOURCE_PATH.joinpath("default_avatar.png"))
-            avatar.thumbnail((128, 128))
-            circle_avatar = circle_corner(avatar, [20])
-            background.paste(circle_avatar, (40, 40), circle_avatar)
-            print(f"头像下载失败：{nick_name}")
+    # for _ in range(3):
+    #     try:
+    #         async with httpx.AsyncClient() as client:
+    #             avatar = await client.get(data["payload"]["user"]["avatar"], timeout=15)
+    #         if avatar.status_code == 200:
+    #             avatar = IMG.open(BytesIO(avatar.content))
+    #             avatar.thumbnail((128, 128))
+    #             circle_avatar = circle_corner(avatar, [20])
+    #             background.paste(circle_avatar, (40, 40), circle_avatar)
+    #             break
+    #         if avatar.status_code == 429:
+    #             logger.warning("达到api limit")
+    #         else:
+    #             # logger.error(f"头像下载失败：{nick_name}")
+    #             continue
+    #     except httpx.HTTPError:
+    #         default_avatar = IMG.open(RESOURCE_PATH.joinpath("default_avatar.png"))
+    #         avatar.thumbnail((128, 128))
+    #         circle_avatar = circle_corner(avatar, [20])
+    #         background.paste(circle_avatar, (40, 40), circle_avatar)
+    #         print(f"头像下载失败：{nick_name}")
     draw.text(
         (220, 50),
         data["payload"]["user"]["nickname"],
@@ -478,6 +478,7 @@ def main():
     loop.run_until_complete(task)
     end_time = time.time()
     print(f"{(end_time - start_time): .2f}")
+
 
 # 性能测试方法
 # if __name__ == "__main__":
