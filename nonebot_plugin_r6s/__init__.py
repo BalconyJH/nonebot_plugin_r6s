@@ -1,7 +1,6 @@
 from types import FunctionType
-from nonebot import on_command
+from nonebot import on_command, get_driver, logger
 from nonebot.adapters.onebot.v11.message import MessageSegment
-from nonebot.rule import to_me
 from nonebot.matcher import Matcher
 from nonebot.params import ArgPlainText, CommandArg
 from nonebot.adapters.onebot.v11 import Event, Message
@@ -9,7 +8,7 @@ import ujson as json
 import os
 
 from .r6s_data import *
-from .net import get_data_from_r6scn
+from .net import get_data_from_r6racker
 from .image import *
 from .player import new_player_from_r6scn
 
@@ -21,6 +20,9 @@ r6s_set = on_command("r6sset", aliases={"r6set", "R6set"}, priority=5, block=Tru
 
 _cachepath = os.path.join("cache", "r6s.json")
 ground_can_do = (base, pro)  # ground数据源乱码过多，干员和近期战绩还在努力解码中···
+driver = get_driver()
+r6s_adapter = get_data_from_r6racker
+max_retry = driver.config.r6s_max_retry
 
 if not os.path.exists("cache"):
     os.makedirs("cache")
@@ -28,6 +30,42 @@ if not os.path.exists("cache"):
 if not os.path.exists(_cachepath):
     with open(_cachepath, "w", encoding="utf-8") as f:
         f.write("{}")
+
+
+@driver.on_startup
+async def initialize():
+    async def network_connectivity():
+        default_name = "MacieJay"
+        try:
+            await r6s_adapter(default_name, max_retry),
+        except ConnectionError:
+            return False
+        else:
+            return True
+
+    async def generate_default_image():
+        try:
+            await init_basic_info_image()
+            return True
+        except FileExistsError:
+            return False
+
+    async def verify_path_exists():
+
+
+    try:
+        results = await asyncio.gather(
+            network_connectivity(),
+            generate_default_image(),
+        )
+        if results[0] is False:
+            logger.warning("查询源连接失败")
+        if results[1] is False:
+            logger.warning("生成预设图片失败")
+        logger.info("初始化成功")
+
+    except Exception as e:
+        logger.error(f"初始化失败：{e}")
 
 
 def set_usr_args(matcher: Matcher, event: Event, msg: Message):
@@ -41,7 +79,7 @@ def set_usr_args(matcher: Matcher, event: Event, msg: Message):
 
 
 async def new_handler(matcher: Matcher, username: str, func: FunctionType):
-    data = await get_data_from_r6scn(username)
+    data = await r6s_adapter(username, max_retry)
     if data == "Not Found":
         await matcher.finish(f"未找到干员『{username}』")
     try:
