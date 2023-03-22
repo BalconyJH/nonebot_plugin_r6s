@@ -7,8 +7,8 @@ from nonebot.adapters.onebot.v11 import Event, Message
 import ujson as json
 import os
 
+from .config import plugin_config
 from .r6s_data import *
-from .net import get_data_from_r6racker
 from .image import *
 from .player import new_player_from_r6scn
 
@@ -20,9 +20,21 @@ r6s_set = on_command("r6sset", aliases={"r6set", "R6set"}, priority=5, block=Tru
 
 _cachepath = os.path.join("cache", "r6s.json")
 ground_can_do = (base, pro)  # ground数据源乱码过多，干员和近期战绩还在努力解码中···
+max_retry = plugin_config.r6s_max_retry
 driver = get_driver()
-r6s_adapter = get_data_from_r6racker
-max_retry = driver.config.r6s_max_retry
+
+
+async def get_r6s_adapter(adapter=plugin_config.r6s_adapters, *args, **kwargs):
+    if adapter == "r6tracker":
+        from .net import get_data_from_r6racker
+        r6s_adapter = get_data_from_r6racker(*args, **kwargs)
+    elif adapter == "r6db":
+        from .net import get_data_from_r6db
+        r6s_adapter = get_data_from_r6db(*args, **kwargs)
+    else:
+        raise ValueError("Invalid driver specified")
+    return r6s_adapter
+
 
 if not os.path.exists("cache"):
     os.makedirs("cache")
@@ -37,7 +49,7 @@ async def initialize():
     async def network_connectivity():
         default_name = "MacieJay"
         try:
-            await r6s_adapter(default_name, max_retry),
+            await get_r6s_adapter().__init__(default_name, max_retry),
         except ConnectionError:
             return False
         else:
@@ -52,20 +64,19 @@ async def initialize():
 
     async def verify_path_exists():
 
+        try:
+            results = await asyncio.gather(
+                network_connectivity(),
+                generate_default_image(),
+            )
+            if results[0] is False:
+                logger.warning("查询源连接失败")
+            if results[1] is False:
+                logger.warning("生成预设图片失败")
+            logger.info("初始化成功")
 
-    try:
-        results = await asyncio.gather(
-            network_connectivity(),
-            generate_default_image(),
-        )
-        if results[0] is False:
-            logger.warning("查询源连接失败")
-        if results[1] is False:
-            logger.warning("生成预设图片失败")
-        logger.info("初始化成功")
-
-    except Exception as e:
-        logger.error(f"初始化失败：{e}")
+        except Exception as e:
+            logger.error(f"初始化失败：{e}")
 
 
 def set_usr_args(matcher: Matcher, event: Event, msg: Message):
@@ -127,9 +138,9 @@ async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
     set_usr_args(matcher, event, msg)
 
 
-@r6s_ops.got("username", prompt="请输入查询的角色昵称")
-async def _(username: str = ArgPlainText()):
-    await new_handler(r6s, username, operators_img)
+# @r6s_ops.got("username", prompt="请输入查询的角色昵称")
+# async def _(username: str = ArgPlainText()):
+#     await new_handler(r6s, username, operators_img)
 
 
 @r6s_plays.handle()

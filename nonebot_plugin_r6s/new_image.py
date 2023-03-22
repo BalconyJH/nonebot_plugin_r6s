@@ -95,53 +95,53 @@ def sec_to_minsec(sec):
 #     return IMG.fromarray(smoothed_array)
 
 
-def circle_corner(img: Image, radii: List[int]) -> Image:
-    """
-    说明:
-        图片圆角处理
-    params:
-        img: 图片
-        radii: 圆角半径 (px) recommended: 20
-    """
-    if len(radii) == 1:
-        radii *= 4
-    elif radii is None:
-        radii = [20] * 4
-
-    alpha = IMG.new("L", img.size, 255)
-
-    for i, corner in enumerate(
-        [
-            "upper_left_corner",
-            "upper_right_corner",
-            "lower_left_corner",
-            "lower_right_corner",
-        ]
-    ):
-        radius = radii[i]
-        circle = IMG.new("L", (radius * 2, radius * 2), 0)
-        draw = ImageDraw.Draw(circle)
-        draw.ellipse((0, 0, radius * 2, radius * 2), fill=255)
-
-        if corner == "lower_left_corner":
-            alpha.paste(
-                circle.crop((0, radius, radius, radius * 2)), (0, img.height - radius)
-            )
-        elif corner == "lower_right_corner":
-            alpha.paste(
-                circle.crop((radius, radius, radius * 2, radius * 2)),
-                (img.width - radius, img.height - radius),
-            )
-        elif corner == "upper_left_corner":
-            alpha.paste(circle.crop((0, 0, radius, radius)), (0, 0))
-        elif corner == "upper_right_corner":
-            alpha.paste(
-                circle.crop((radius, 0, radius * 2, radius)), (img.width - radius, 0)
-            )
-    img = img.convert("RGBA")
-    img.putalpha(alpha)
-    img.filter(ImageFilter.SMOOTH_MORE)
-    return img
+# def circle_corner(img: Image, radii: List[int]) -> Image:
+#     """
+#     说明:
+#         图片圆角处理
+#     params:
+#         img: 图片
+#         radii: 圆角半径 (px) recommended: 20
+#     """
+#     if len(radii) == 1:
+#         radii *= 4
+#     elif radii is None:
+#         radii = [20] * 4
+#
+#     alpha = IMG.new("L", img.size, 255)
+#
+#     for i, corner in enumerate(
+#         [
+#             "upper_left_corner",
+#             "upper_right_corner",
+#             "lower_left_corner",
+#             "lower_right_corner",
+#         ]
+#     ):
+#         radius = radii[i]
+#         circle = IMG.new("L", (radius * 2, radius * 2), 0)
+#         draw = ImageDraw.Draw(circle)
+#         draw.ellipse((0, 0, radius * 2, radius * 2), fill=255)
+#
+#         if corner == "lower_left_corner":
+#             alpha.paste(
+#                 circle.crop((0, radius, radius, radius * 2)), (0, img.height - radius)
+#             )
+#         elif corner == "lower_right_corner":
+#             alpha.paste(
+#                 circle.crop((radius, radius, radius * 2, radius * 2)),
+#                 (img.width - radius, img.height - radius),
+#             )
+#         elif corner == "upper_left_corner":
+#             alpha.paste(circle.crop((0, 0, radius, radius)), (0, 0))
+#         elif corner == "upper_right_corner":
+#             alpha.paste(
+#                 circle.crop((radius, 0, radius * 2, radius)), (img.width - radius, 0)
+#             )
+#     img = img.convert("RGBA")
+#     img.putalpha(alpha)
+#     img.filter(ImageFilter.SMOOTH_MORE)
+#     return img
 
 
 def division_zero(a, b):
@@ -199,33 +199,33 @@ async def get_pic(type: str, name: str):
     return IMG.open(BytesIO(r.content)).convert("RGBA")
 
 
-def init_basic_info_image():
-    """
-    初始化背景图。
-    """
-    # 底图
-    background = horizontal_linear_gradient((80, 80, 80), (40, 40, 40), 800, 635)
-    draw = ImageDraw.Draw(background)
-
-    # 战绩板背景
-    record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
-    circle_record_background = circle_corner(record_background, [12])
-    background.paste(circle_record_background, (40, 215), circle_record_background)
-
-    # 预设内容
-    draw.text((80, 250), "全局统计", "white", font_30)
-    text_info = """\
-    场均击杀          击杀              死亡              助攻
-    胜率              胜场              负场              游戏局数
-    爆头              击倒              破坏              K/D"""
-    draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
-
-    # 默认头像
-    default_avatar = IMG.open(DEFAULT_AVATAR)
-    default_avatar.thumbnail((128, 128))
-    background.paste(circle_corner(default_avatar, [20]), (40, 40), default_avatar)
-
-    background.save(CACHE_PATH.joinpath("background.png"))
+# def init_basic_info_image():
+#     """
+#     初始化背景图。
+#     """
+#     # 底图
+#     background = horizontal_linear_gradient((80, 80, 80), (40, 40, 40), 800, 635)
+#     draw = ImageDraw.Draw(background)
+#
+#     # 战绩板背景
+#     record_background = IMG.new("RGB", (720, 380), (26, 27, 31))
+#     circle_record_background = circle_corner(record_background, [12])
+#     background.paste(circle_record_background, (40, 215), circle_record_background)
+#
+#     # 预设内容
+#     draw.text((80, 250), "全局统计", "white", font_30)
+#     text_info = """\
+#     场均击杀          击杀              死亡              助攻
+#     胜率              胜场              负场              游戏局数
+#     爆头              击倒              破坏              K/D"""
+#     draw.text((85, 310), text_info, (150, 150, 150), font_20, spacing=70)
+#
+#     # 默认头像
+#     default_avatar = IMG.open(DEFAULT_AVATAR)
+#     default_avatar.thumbnail((128, 128))
+#     background.paste(circle_corner(default_avatar, [20]), (40, 40), default_avatar)
+#
+#     background.save(CACHE_PATH.joinpath("background.png"))
 
 
 async def draw_r6(nick_name: str):
