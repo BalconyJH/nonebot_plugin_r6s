@@ -27,9 +27,11 @@ driver = get_driver()
 async def get_r6s_adapter(adapter=plugin_config.r6s_adapters, *args, **kwargs):
     if adapter == "r6tracker":
         from .net import get_data_from_r6racker
+
         r6s_adapter = get_data_from_r6racker(*args, **kwargs)
     elif adapter == "r6db":
         from .net import get_data_from_r6db
+
         r6s_adapter = get_data_from_r6db(*args, **kwargs)
     else:
         raise ValueError("Invalid driver specified")
@@ -49,7 +51,7 @@ async def initialize():
     async def network_connectivity():
         default_name = "MacieJay"
         try:
-            await get_r6s_adapter().__init__(default_name, max_retry),
+            await get_r6s_adapter(default_name, max_retry),
         except ConnectionError:
             return False
         else:
@@ -63,7 +65,6 @@ async def initialize():
             return False
 
     async def verify_path_exists():
-
         try:
             results = await asyncio.gather(
                 network_connectivity(),
@@ -89,33 +90,35 @@ def set_usr_args(matcher: Matcher, event: Event, msg: Message):
             matcher.set_arg("username", Message(username))
 
 
-async def new_handler(matcher: Matcher, username: str, func: FunctionType):
-    data = await r6s_adapter(username, max_retry)
-    if data == "Not Found":
-        await matcher.finish(f"未找到干员『{username}』")
-    try:
-        player = new_player_from_r6scn(data)
-    except:
-        await matcher.finish(f"查询干员出错『{username}』")
-        return
-    img_b64 = encode_b64(await func(player))
-    await matcher.finish(MessageSegment.image(file=f"base64://{img_b64}"))
+# async def new_handler(matcher: Matcher, username: str, func: FunctionType):
+#     data = await get_r6s_adapter(
+#         plugin_config.default_name, plugin_config.r6s_max_retry, plugin_config.r6s_proxy
+#     )
+#     if data == "Not Found":
+#         await matcher.finish(f"未找到干员『{username}』")
+#     try:
+#         player = new_player_from_r6scn(data)
+#     except:
+#         await matcher.finish(f"查询干员出错『{username}』")
+#         return
+#     img_b64 = encode_b64(await func(player))
+#     await matcher.finish(MessageSegment.image(file=f"base64://{img_b64}"))
 
 
-@r6s_set.handle()
-async def r6s_set_handler(event: Event, args: Message = CommandArg()):
-    if args := args.extract_plain_text():
-        with open(_cachepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        data[event.get_user_id()] = args
-        with open(_cachepath, "w", encoding="utf-8") as f:
-            json.dump(data, f)
-        await r6s_set.finish(f"已设置ID：{args}")
+# @r6s_set.handle()
+# async def r6s_set_handler(event: Event, args: Message = CommandArg()):
+#     if args := args.extract_plain_text():
+#         with open(_cachepath, "r", encoding="utf-8") as f:
+#             data = json.load(f)
+#         data[event.get_user_id()] = args
+#         with open(_cachepath, "w", encoding="utf-8") as f:
+#             json.dump(data, f)
+#         await r6s_set.finish(f"已设置ID：{args}")
 
 
-@r6s.handle()
-async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
-    set_usr_args(matcher, event, msg)
+# @r6s.handle()
+# async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
+#     set_usr_args(matcher, event, msg)
 
 
 @r6s.got("username", prompt="请输入查询的角色昵称")
@@ -123,19 +126,19 @@ async def _(username: str = ArgPlainText()):
     await new_handler(r6s, username, base_image)
 
 
-@r6s_pro.handle()
-async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
-    set_usr_args(matcher, event, msg)
+# @r6s_pro.handle()
+# async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
+#     set_usr_args(matcher, event, msg)
 
 
-@r6s_pro.got("username", prompt="请输入查询的角色昵称")
-async def _(username: str = ArgPlainText()):
-    await new_handler(r6s, username, detail_image)
+# @r6s_pro.got("username", prompt="请输入查询的角色昵称")
+# async def _(username: str = ArgPlainText()):
+#     await new_handler(r6s, username, detail_image)
 
 
-@r6s_ops.handle()
-async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
-    set_usr_args(matcher, event, msg)
+# @r6s_ops.handle()
+# async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
+#     set_usr_args(matcher, event, msg)
 
 
 # @r6s_ops.got("username", prompt="请输入查询的角色昵称")
@@ -143,11 +146,11 @@ async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
 #     await new_handler(r6s, username, operators_img)
 
 
-@r6s_plays.handle()
-async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
-    set_usr_args(matcher, event, msg)
+# @r6s_plays.handle()
+# async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):
+#     set_usr_args(matcher, event, msg)
 
 
-@r6s_plays.got("username", prompt="请输入查询的角色昵称")
-async def _(username: str = ArgPlainText()):
-    await new_handler(r6s, username, plays_image)
+# @r6s_plays.got("username", prompt="请输入查询的角色昵称")
+# async def _(username: str = ArgPlainText()):
+#     await new_handler(r6s, username, plays_image)
