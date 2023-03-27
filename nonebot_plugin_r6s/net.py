@@ -63,7 +63,7 @@ async def get_data_from_r6stats(user_name: str) -> dict:
 
 async def get_data_from_r6db(user_name: str, max_retry: int) -> Union[dict, str, None]:
     async with httpx.AsyncClient(
-        timeout=10, auth=AUTH, follow_redirects=True
+            timeout=10, auth=AUTH, follow_redirects=True
     ) as client:
         resp = await client.get(f"https://api.statsdb.net/r6/pc/player/{user_name}")
     if resp.status_code == 200:
@@ -78,7 +78,7 @@ async def get_data_from_r6db(user_name: str, max_retry: int) -> Union[dict, str,
         raise ConnectionRefusedError("API request limit reached")
 
 
-async def get_data_from_r6racker(user_name: str, max_retry: int) -> Optional[dict]:
+async def get_data_from_r6racker(user_name: str, max_retry: int, proxy: str) -> Optional[dict]:
     url_list = [
         f"https://r6.tracker.network/profile/pc/{user_name}",
         f"https://r6.tracker.network/profile/pc/{user_name}/seasons",
@@ -92,13 +92,13 @@ async def get_data_from_r6racker(user_name: str, max_retry: int) -> Optional[dic
                     headers = {
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
                     }
-                    async with session.get(url, headers=headers) as resp:
+                    async with session.get(url, headers=headers, proxy=proxy) as resp:
                         resp.raise_for_status()
                         return await resp.text()
 
                 results = await asyncio.gather(*[fetch(url) for url in url_list])
                 return {"basic_data": results[0], "seasons_data": results[1]}
         except aiohttp.ClientError:
-            logger.warning(f"请求错误，重试次数：{retry_count+1}")
+            logger.warning(f"请求错误，重试次数：{retry_count + 1}")
             await asyncio.sleep(1)
     return None
