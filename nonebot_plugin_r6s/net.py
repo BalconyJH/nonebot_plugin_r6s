@@ -1,10 +1,10 @@
-import httpx
 import asyncio
-import aiohttp
-import re
 import json
+import re
 from typing import Union, Optional
 
+import aiohttp
+import httpx
 from nonebot import get_driver
 from nonebot.log import logger
 
@@ -37,7 +37,7 @@ async def get_data_from_r6scn(user_name: str) -> dict:
         raise RuntimeError(f"Request failed: {str(e)}") from e
 
 
-async def get_data_from_r6sground(user_name: str) -> dict:
+async def get_data_from_r6ground(user_name: str) -> dict:
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"https://global.r6sground.cn/stats/{user_name}/data")
     datas = re.split(r"(data: )", resp.text)
