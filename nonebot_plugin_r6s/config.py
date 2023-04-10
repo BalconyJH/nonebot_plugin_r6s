@@ -20,6 +20,8 @@ class Config(BaseSettings, extra=Extra.ignore):
             values["r6s_font"] = str(
                 Path(__file__).parent / "fonts" / "font.ttc"
             )
+        if not values.get("r6s_adapters"):
+            values["r6s_adapters"] = "r6tracker"
 
 
 global_config = get_driver().config
