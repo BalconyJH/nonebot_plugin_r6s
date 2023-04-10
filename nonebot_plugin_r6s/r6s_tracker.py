@@ -1,6 +1,6 @@
 import asyncio
+
 import aiohttp
-import re
 from lxml import etree
 
 
@@ -51,7 +51,8 @@ def get_user_info(default_data):
                 '(./div//div[@class="trn-defstat__name"] | ./div[@class="trn-defstat__name"])/text()'
             )[0]
             .strip(): defstat.xpath(
-                '(./div//div[@class="trn-defstat__value-stylized"] | ./div[@class="trn-defstat__value-stylized"])/text()'
+                '(./div//div[@class="trn-defstat__value-stylized"] | ./div['
+                '@class="trn-defstat__value-stylized"])/text()'
             )[0]
             .strip()
         }

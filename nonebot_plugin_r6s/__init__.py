@@ -1,16 +1,15 @@
-from types import FunctionType
-from nonebot import on_command, get_driver, logger
-from nonebot.adapters.onebot.v11.message import MessageSegment
-from nonebot.matcher import Matcher
-from nonebot.params import ArgPlainText, CommandArg
-from nonebot.adapters.onebot.v11 import Event, Message
-import ujson as json
 import os
 
+import ujson as json
+from nonebot import on_command, get_driver
+from nonebot.adapters.onebot.v11 import Event, Message
+from nonebot.matcher import Matcher
+from nonebot.params import ArgPlainText
+
 from .config import plugin_config
-from .r6s_data import *
-from .image import *
+# from utils.image import *
 from .player import new_player_from_r6scn
+from .r6s_data import *
 
 r6s = on_command("r6s", aliases={"彩六", "彩虹六号", "r6", "R6"}, priority=5, block=True)
 r6s_pro = on_command("r6spro", aliases={"r6pro", "R6pro"}, priority=5, block=True)
@@ -24,60 +23,12 @@ max_retry = plugin_config.r6s_max_retry
 driver = get_driver()
 
 
-async def get_r6s_adapter(adapter=plugin_config.r6s_adapters, *args, **kwargs):
-    if adapter == "r6tracker":
-        from .net import get_data_from_r6racker
-
-        r6s_adapter = get_data_from_r6racker(*args, **kwargs)
-    elif adapter == "r6db":
-        from .net import get_data_from_r6db
-
-        r6s_adapter = get_data_from_r6db(*args, **kwargs)
-    else:
-        raise ValueError("Invalid driver specified")
-    return r6s_adapter
-
-
 if not os.path.exists("cache"):
     os.makedirs("cache")
 
 if not os.path.exists(_cachepath):
     with open(_cachepath, "w", encoding="utf-8") as f:
         f.write("{}")
-
-
-@driver.on_startup
-async def initialize():
-    async def network_connectivity():
-        default_name = "MacieJay"
-        try:
-            await get_r6s_adapter(default_name, max_retry),
-        except ConnectionError:
-            return False
-        else:
-            return True
-
-    async def generate_default_image():
-        try:
-            await init_basic_info_image()
-            return True
-        except FileExistsError:
-            return False
-
-    async def verify_path_exists():
-        try:
-            results = await asyncio.gather(
-                network_connectivity(),
-                generate_default_image(),
-            )
-            if results[0] is False:
-                logger.warning("查询源连接失败")
-            if results[1] is False:
-                logger.warning("生成预设图片失败")
-            logger.info("初始化成功")
-
-        except Exception as e:
-            logger.error(f"初始化失败：{e}")
 
 
 def set_usr_args(matcher: Matcher, event: Event, msg: Message):
