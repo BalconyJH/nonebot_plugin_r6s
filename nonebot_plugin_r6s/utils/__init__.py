@@ -54,8 +54,9 @@ async def check_font_exists(font_path: str) -> bool:
     return Path(font_path).exists()
 
 
-class InitR6sPlugin:
-    @staticmethod
+def on_startup():
+    """初始化插件"""
+
     async def network_connectivity():
         """检查网络连接"""
         try:
@@ -65,7 +66,6 @@ class InitR6sPlugin:
         else:
             return True
 
-    @staticmethod
     async def generate_default_image():
         """生成默认图片"""
         try:
@@ -74,7 +74,6 @@ class InitR6sPlugin:
         except FileExistsError:
             return False
 
-    @staticmethod
     async def verify_font():
         """检查字体文件是否存在"""
         try:
@@ -89,27 +88,24 @@ class InitR6sPlugin:
         except (FileNotFoundError, asyncio.TimeoutError):
             return False
 
-    @staticmethod
-    async def verify_resource_integrity():
-        """检查资源完整性"""
-        try:
-            connectivity_result, image_result, font_result = await asyncio.gather(
-                InitR6sPlugin.network_connectivity(),
-                InitR6sPlugin.generate_default_image(),
-                InitR6sPlugin.verify_font(),
-            )
-            if connectivity_result is False:
-                logger.warning("查询源连接失败")
-            if image_result is False:
-                logger.warning("生成预设图片失败")
-            if font_result is False:
-                logger.warning("字体文件校验失败")
-            if all([connectivity_result, image_result, font_result]):
-                logger.info("初始化成功")
-                return True
-            else:
-                logger.warning("初始化失败")
-                return False
-        except Exception as e:
-            logger.exception(f"初始化失败：{e}")
+    try:
+        connectivity_result, image_result, font_result = await asyncio.gather(
+            network_connectivity(),
+            generate_default_image(),
+            verify_font(),
+        )
+        if connectivity_result is False:
+            logger.warning("查询源连接失败")
+        if image_result is False:
+            logger.warning("生成预设图片失败")
+        if font_result is False:
+            logger.warning("字体文件校验失败")
+        if all([connectivity_result, image_result, font_result]):
+            logger.info("初始化成功")
+            return True
+        else:
+            logger.warning("初始化失败")
             return False
+    except Exception as e:
+        logger.exception(f"初始化失败：{e}")
+        return False

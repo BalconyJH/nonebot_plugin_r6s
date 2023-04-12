@@ -1,8 +1,8 @@
-from httpx import AsyncClient
-import ujson as json
 import asyncio
 import re
 
+import ujson as json
+from httpx import AsyncClient
 
 from .r6s_stats import get_stats
 

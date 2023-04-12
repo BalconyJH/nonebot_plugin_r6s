@@ -1,7 +1,7 @@
+import asyncio
 from datetime import datetime
 
 import httpx
-import asyncio
 
 
 def rank(mmr: int) -> str:
