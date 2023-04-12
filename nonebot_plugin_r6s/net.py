@@ -8,8 +8,10 @@ import httpx
 from nonebot import get_driver
 from nonebot.log import logger
 
+from .config import plugin_config
+
 AUTH = (get_driver().config.r6db_user_id, get_driver().config.r6db_password)
-max_retry = 3
+max_retry = plugin_config.r6s_max_retry
 
 
 async def get_data_from_r6scn(user_name: str) -> dict:
@@ -61,7 +63,7 @@ async def get_data_from_r6stats(user_name: str) -> dict:
     # todo
 
 
-async def get_data_from_r6db(user_name: str, max_retry: int) -> Union[dict, str, None]:
+async def get_data_from_r6db(user_name: str) -> Union[dict, str, None]:
     async with httpx.AsyncClient(
             timeout=10, auth=AUTH, follow_redirects=True
     ) as client:
@@ -78,7 +80,7 @@ async def get_data_from_r6db(user_name: str, max_retry: int) -> Union[dict, str,
         raise ConnectionRefusedError("API request limit reached")
 
 
-async def get_data_from_r6racker(user_name: str, max_retry: int, proxy: str) -> Optional[dict]:
+async def get_data_from_r6racker(user_name: str, proxy: str) -> Optional[dict]:
     url_list = [
         f"https://r6.tracker.network/profile/pc/{user_name}",
         f"https://r6.tracker.network/profile/pc/{user_name}/seasons",
@@ -90,7 +92,8 @@ async def get_data_from_r6racker(user_name: str, max_retry: int, proxy: str) -> 
 
                 async def fetch(url):
                     headers = {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, "
+                                      "like Gecko) Chrome/110.0.0.0 Safari/537.36"
                     }
                     async with session.get(url, headers=headers, proxy=proxy) as resp:
                         resp.raise_for_status()

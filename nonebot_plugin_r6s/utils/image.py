@@ -8,7 +8,7 @@ from typing import List
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from PIL.ImageDraw import ImageDraw as ImageDraw
 
-from .player import Player, CRStat, rank, SeasonRanks
+from ..plugins import Player, CRStat, rank, SeasonRanks
 
 RESOURCE_PATH = Path(__file__).parent
 
@@ -173,6 +173,15 @@ def init_basic_info_image():
     background.paste(circle_corner(default_avatar, [20]), (40, 40), default_avatar)
 
     background.save(CACHE_PATH.joinpath("background.png"))
+
+
+async def draw_basic_info_image(player: Player, title: str) -> ImageDraw:
+    # 复制预生成的 basic_info_image
+    image = Image.open(CACHE_PATH.joinpath("background.png")).copy()
+    draw = ImageDraw.Draw(image)
+    draw.text((200, 20), player.username, fill="black", font=GEN_WAN_MIN)
+    draw.text((200, 100), title, fill="black", font=GEN_WAN_MIN)
+    return draw
 
 
 async def draw_head(image: Image, player: Player, title: str) -> ImageDraw:
