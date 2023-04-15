@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from typing import Union, Optional
+from typing import Union
 
 import aiohttp
 import httpx
@@ -80,7 +80,7 @@ async def get_data_from_r6db(user_name: str) -> Union[dict, str, None]:
         raise ConnectionRefusedError("API request limit reached")
 
 
-async def get_data_from_r6racker(user_name: str, proxy: str) -> Optional[dict]:
+async def get_data_from_r6racker(user_name: str, proxy: str):
     url_list = [
         f"https://r6.tracker.network/profile/pc/{user_name}",
         f"https://r6.tracker.network/profile/pc/{user_name}/seasons",
@@ -97,11 +97,12 @@ async def get_data_from_r6racker(user_name: str, proxy: str) -> Optional[dict]:
                     }
                     async with session.get(url, headers=headers, proxy=proxy) as resp:
                         resp.raise_for_status()
-                        return await resp.text()
+                        return await resp.json()
 
                 results = await asyncio.gather(*[fetch(url) for url in url_list])
                 return {"basic_data": results[0], "seasons_data": results[1]}
         except aiohttp.ClientError:
             logger.warning(f"请求错误，重试次数：{retry_count + 1}")
             await asyncio.sleep(1)
-    return None
+
+    return ConnectionError

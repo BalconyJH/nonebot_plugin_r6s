@@ -13,12 +13,17 @@ class Config(BaseSettings, extra=Extra.ignore):
     r6s_db_password: Optional[str]
     r6s_adapters: Optional[str]
     r6s_font: Optional[str] = None
+    r6s_cache_dir: Optional[str] = None
 
     @root_validator("r6s_font")
     def set_default_values(cls, values):
         if not values.get("r6s_font"):
             values["r6s_font"] = str(
-                Path(__file__).parent / "fonts" / "font.ttc"
+                Path(__file__).parent / "fonts"
+            )
+        if not values.get("r6s_cache_dir"):
+            values["r6s_cache_dir"] = str(
+                Path(__file__).parent / "cache"
             )
         if not values.get("r6s_adapters"):
             values["r6s_adapters"] = "r6tracker"

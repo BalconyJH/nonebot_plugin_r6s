@@ -49,7 +49,11 @@ if not os.path.exists(_cachepath):
 
 
 async def new_handler(matcher: Matcher, username: str, func: FunctionType):
-
+    player = await new_player_from_r6scn(username)
+    if player:
+        await matcher.finish(await func(player))
+    else:
+        await matcher.finish("未找到该用户")
 
 # @r6s_set.handle()
 # async def r6s_set_handler(event: Event, args: Message = CommandArg()):
@@ -69,7 +73,7 @@ async def new_handler(matcher: Matcher, username: str, func: FunctionType):
 
 @r6s.got("username", prompt="请输入查询的角色昵称")
 async def _(username: str = ArgPlainText()):
-    await new_handler(r6s, username, base_image)
+    await new_handler(username)
 
 # @r6s_pro.handle()
 # async def _(matcher: Matcher, event: Event, msg: Message = CommandArg()):

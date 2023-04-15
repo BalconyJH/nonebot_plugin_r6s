@@ -1,6 +1,29 @@
+import warnings
+from io import BytesIO
 from typing import List, Dict, Optional, Union
 
+import aiohttp
 import httpx
+from PIL import Image as IMG
+from PIL.Image import Image
+
+
+def deprecated(cls):
+    """
+    This is a decorator which can be used to mark classes
+    or functions as deprecated. It will result in a warning
+    being emitted when the function/class is used.
+    """
+
+    def new_func(*args, **kwargs):
+        warnings.warn(
+            f"Call to deprecated class {cls.__name__}.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls(*args, **kwargs)
+
+    return new_func
 
 
 class DataStruct:
@@ -8,6 +31,7 @@ class DataStruct:
         return self.__dict__.__repr__()
 
 
+@deprecated
 class BasicStat(DataStruct):
     level: int
     playtime: str
@@ -128,6 +152,49 @@ class OperatorStat(DataStruct):
         return "-" if self.played == 0 else f"{self.won / self.played * 100:.2f}"
 
 
+def division_zero(a, b):
+    return a / b if b else 0
+
+
+def sec_to_min_sec(sec):
+    minutes, _ = divmod(int(sec), 60)
+    hours, minutes = divmod(int(minutes), 60)
+    one_min = "%.2f" % (minutes / 60)
+    return f"{hours:1d}.{one_min[2]}H"
+
+
+class BasicInfo(DataStruct):
+    nickname: str
+    level: int
+    time: str
+    mmr: int
+    kpm: str
+    kills: int
+    deaths: str
+    assists: str
+    wl: str
+    wins: int
+    losses: str
+    matches_played: int
+    kd: str
+    hs: str
+    downs: str
+    gadget_destroy: str
+    avatar_url: str
+    avatar_image: Image
+
+    def __init__(self, data: Dict) -> None:
+        self.__dict__.update(data)
+        self.kpm = division_zero(self.kills, self.matches_played)
+        self.wl = "%.2f%%" % (self.wins / self.matches_played * 100)
+        self.kd = "%.2f" % division_zero(self.kills, self.deaths)
+
+    async def get_avatar_image(self) -> Image:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.avatar_url) as resp:
+                return IMG.open(BytesIO(await resp.read()))
+
+
 class Player(DataStruct):
     username: str
     user_id: str
@@ -158,7 +225,7 @@ class Player(DataStruct):
             level = max(level, stat.level)
         return level
 
-    async def get_avatar(self, retry_times=0) -> Union[bytes, None]:
+    async def get_avatar(self) -> Union[bytes, None]:
         try:
             AVATAR_BASE = "https://ubisoft-avatars.akamaized.net/{}/default_146_146.png"
             async with httpx.AsyncClient() as client:
