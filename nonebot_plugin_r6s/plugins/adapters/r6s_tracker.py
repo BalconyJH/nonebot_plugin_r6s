@@ -1,21 +1,75 @@
 import asyncio
+from io import BytesIO
 
+import PIL
 import aiohttp
+from PIL import Image as IMG
+from PIL.Image import Image
 from lxml import etree
+from tqdm import tqdm
 
+proxy = 'http://127.0.0.1:10809'
+
+
+async def download_image_async(url: str, proxy=proxy) -> Image:
+    """异步下载图片。
+
+    Args:
+        url (str): 图片的 URL。
+        proxy (str): HTTP 代理地址。
+
+    Returns:
+        PIL.Image.Image: 表示下载的图片。
+    """
+    try:
+        # 使用 aiohttp 发起 HTTP 请求
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, proxy=proxy) as response:
+                total_size = int(response.headers.get('content-length', 0))
+                block_size = 1024
+
+                progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True,
+                                    desc=url)
+                img_bytes = BytesIO()
+                while True:
+                    chunk = await response.content.read(block_size)
+                    if not chunk:
+                        break
+                    progress_bar.update(len(chunk))
+                    img_bytes.write(chunk)
+                # 将 BytesIO 对象的读取位置移到开头
+                img_bytes.seek(0)
+                img = IMG.open(img_bytes)
+                progress_bar.close()
+
+                return img
+    except (aiohttp.ClientError, PIL.UnidentifiedImageError) as e:
+        pass
 
 async def fetch(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/110.0.0.0"
-        "Safari/537.36"
+                      "Chrome/110.0.0.0"
+                      "Safari/537.36"
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
             return await resp.text()
 
 
-def get_user_info(default_data):
+async def get_user_basic_info(processed_data):
+    html_data = etree.HTML(processed_data)
+    profile_div = html_data.xpath('//*[@id="profile"]')[0]
+
+    avatar_image = await download_image_async(profile_div.xpath(
+        '//div[contains(@class, "trn-profile-header__avatar")]/img/@src'
+    )[0])
+    nickname = profile_div.xpath(
+        '//*[@class="trn-profile-header__title"]/span[@class="trn-profile-header__name"]/text()'
+    )[0].strip()
+
+
+async def get_user_info(default_data):
     html_data = etree.HTML(default_data)
     profile_div = html_data.xpath('//*[@id="profile"]')[0]
 
@@ -28,7 +82,7 @@ def get_user_info(default_data):
 
     user_data = [
         {
-            "avatar_url": avatar_url,
+            "avatar_url": await download_image_async(avatar_url)
         },
         {
             "user_id": user_id,
@@ -58,41 +112,40 @@ def get_user_info(default_data):
         }
         for defstat in defstat_light_divs
     ]
-
-    print(user_data)
     print(user_data_array)
-    print(user_data[1]['user_id'])
     defstat_dark_divs = overall_div.xpath(
         './/div[@class="trn-card__content"]/div[contains(@class, "trn-defstats")]/div[contains(@class, "trn-defstat")]'
     )
 
-# [{'avatar_url': 'https://ubisoft-avatars.akamaized.net/4f3faa88-568b-475c-a382-a986a2181cb7/default_256_256.png', 'user_id': 'Juelee.PIG'}]
-# [{'Best MMR': '4,159'}, {'Level': '258'}, {'Avg Seasonal MMR': '3,444'}]
+    # [{'avatar_url': 'https://ubisoft-avatars.akamaized.net/4f3faa88-568b-475c-a382-a986a2181cb7/default_256_256.png', 'user_id': 'Juelee.PIG'}]
+    # [{'Best MMR': '4,159'}, {'Level': '258'}, {'Avg Seasonal MMR': '3,444'}]
+
+    # playtime = defstat_dark_divs['playtime']
+    user_data_array.extend(
+        {
+            "label": defstat.xpath('div[@class="trn-defstat__name"]/text()')[0].strip(),
+            "value": defstat.xpath('div[@class="trn-defstat__value"]/text()')[0].strip()
+        } for defstat in defstat_dark_divs
+    )
+    print(user_data_array)
+
+    defstat_general_divs = overall_div.xpath(
+        'following-sibling::div[1]//div[contains(@class, "trn-defstats")]/div[contains(@class, "trn-defstat") and '
+        'not(contains(@class, "disabled"))]')
+    user_data_array.extend(
+        {
+            "label": defstat.xpath('div[@class="trn-defstat__name"]/text()')[
+                0
+            ].strip(),
+            "value": defstat.xpath('div[@class="trn-defstat__value"]/text()')[
+                0
+            ].strip(),
+        }
+        for defstat in defstat_general_divs
+    )
+    return user_data_array
 
 
-#     playtime = defstat_dark_divs['playtime']
-#     user_data_array.extend(
-#         {
-#             "label": defstat.xpath('div[@class="trn-defstat__name"]/text()')[0].strip(),
-#             "value": defstat.xpath('div[@class="trn-defstat__value"]/text()')[0].strip()
-#         } for defstat in defstat_dark_divs
-#     )
-#
-#     defstat_general_divs = overall_div.xpath(
-#         'following-sibling::div[1]//div[contains(@class, "trn-defstats")]/div[contains(@class, "trn-defstat") and '
-#         'not(contains(@class, "disabled"))]')
-#     user_data_array.extend(
-#         {
-#             "label": defstat.xpath('div[@class="trn-defstat__name"]/text()')[
-#                 0
-#             ].strip(),
-#             "value": defstat.xpath('div[@class="trn-defstat__value"]/text()')[
-#                 0
-#             ].strip(),
-#         }
-#         for defstat in defstat_general_divs
-#     )
-#     return user_data_array
 #
 #
 # def get_season_data(season_data):
@@ -164,7 +217,7 @@ async def main():
     tasks = [asyncio.create_task(fetch(url)) for url in url_list]
     results = await asyncio.gather(*tasks)
 
-    get_user_info(results[0])
+    await get_user_info(results[0])
     # default_data = get_default_data(results[0])
     # season_data = get_season_data(results[1])
 

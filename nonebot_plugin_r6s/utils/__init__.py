@@ -77,7 +77,7 @@ def on_startup():
     async def verify_font():
         """检查字体文件是否存在"""
         try:
-            font_exists = await check_font_exists(FONT_PATH)
+            font_exists = await check_font_exists(FONT_PATH.join("font.ttc"))
             if not font_exists:
                 await download_res_async(
                     "https://media.githubusercontent.com/media/BalconyJH/Font/main/font.ttc",

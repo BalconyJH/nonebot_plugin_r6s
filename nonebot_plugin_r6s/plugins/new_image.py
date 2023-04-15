@@ -1,15 +1,12 @@
 import asyncio
+import time
 from io import BytesIO
 from pathlib import Path
-import time
-from PIL.Image import Image
-from PIL import Image as IMG
-from PIL import ImageDraw, ImageFont, ImageOps, ImageFilter
-import httpx
-from typing import List, Union
-import cProfile
 
-from nonebot import logger
+import httpx
+from PIL import Image as IMG
+from PIL import ImageOps
+from PIL.Image import Image
 
 start_time = time.time()
 AUTH = ("1749739643927884", "753a3649075db01a1100aade02713531")

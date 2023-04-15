@@ -10,6 +10,7 @@ DATABASE = BASEPATH.joinpath("data")
 DATABASE.joinpath("operators").mkdir(parents=True, exist_ok=True)
 DATABASE.joinpath("weapons").mkdir(parents=True, exist_ok=True)
 
+
 def rank(mmr: int) -> str:
     """
     根据给定的MMR值，返回对应的段位名称。
@@ -40,7 +41,6 @@ def rank(mmr: int) -> str:
         return head[-2]
     else:
         return head[-1]
-
 
 
 async def get_picture(picture_type: str, name: str):
@@ -90,10 +90,6 @@ async def get_user_avatar_picture(data: dict):
 
     返回：
     Image: 用户的头像图片，如果获取失败返回None。
-
-    示例：
-    >>> get_user_avatar_picture(data)
-    <PIL.Image.Image image mode=RGBA size=...>
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -103,7 +99,6 @@ async def get_user_avatar_picture(data: dict):
     except (httpx.HTTPError, httpx.RequestError) as e:
         logger.error(f"Failed to download user avatar image: {e}")
         return None
-
 
 
 def second_to_miniutesecond(seconds: int) -> str:
@@ -206,6 +201,8 @@ async def get_operator(data: dict) -> dict:
         "best_kd": best_kd,
         "best_wl": best_wl,
     }
+
+
 # def con(*args) -> str:
 #     r = "".join(arg + "\n" for arg in args)
 #     return r[:-1]
@@ -254,7 +251,6 @@ def get_weapon_details(data: dict) -> dict:
         "deaths": weapons["deaths"],
         "kd": weapon_kd,
     }
-
 
 # def gen_stat(data: dict) -> str:
 #     return con(
