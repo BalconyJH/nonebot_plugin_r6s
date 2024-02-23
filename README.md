@@ -1,8 +1,6 @@
 <div align="center">
 
 # NoneBot Plugin R6s
-## 本项目暂停开发，仓库将会归档直至下一次更新
-## The development of this project is suspended, and the warehouse will be archived until the next update
 
 Rainbow Six Siege Players Searcher For Nonebot2
 
