@@ -1,5 +1,0 @@
-[pypi]
-verify_ssl = false
-
-[python]
-path = "C:\\Users\\BalconyJH\\Documents\\GitHub\\nonebot_plugin_r6s\\.venv\\Scripts\\python.exe"
