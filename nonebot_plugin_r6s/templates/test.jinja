@@ -6,7 +6,7 @@
     <title>Player Profile</title>
     <style>
         body {
-            font-family: "JetBrains Mono", sans-serif;
+            font-family: {{ font_family }}, sans-serif;
             background-color: #121212;
             color: #f5f5f5;
             margin: 0;
@@ -201,6 +201,18 @@
             margin-bottom: 10px;
         }
 
+        .section-title.version {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
         .role-icons {
             display: flex;
             gap: 15px;
@@ -257,7 +269,7 @@
                 </div>
             {% endfor %}
             <div class="additional-info">
-                <div class="text-line bold">Power by</div>
+                <div class="text-line bold">Powered by</div>
                 <div class="text-line bold">Nonebot & nonebot-plugin-r6s</div>
                 <div class="text-line">Generation time: {{ generation_time }}</div>
             </div>
@@ -269,9 +281,9 @@
                     <div class="stat-text">Rank</div>
                 </div>
                 <div class="stats-content">
-                    <div class="stat-item">K D: {{ rank_kd }}</div>
+                    <div class="stat-item">KD: {{ rank_kd }}</div>
                     <div class="stat-item">KPM: {{ rank_kpm }}</div>
-                    <div class="stat-item">W R: {{ rank_wr }}</div>
+                    <div class="stat-item">WinRate: {{ rank_wr }}</div>
                 </div>
             </div>
             <div class="stats">
@@ -280,9 +292,9 @@
                     <div class="stat-text">Match</div>
                 </div>
                 <div class="stats-content">
-                    <div class="stat-item">K D: {{ quick_kd }}</div>
+                    <div class="stat-item">KD: {{ quick_kd }}</div>
                     <div class="stat-item">KPM: {{ quick_kpm }}</div>
-                    <div class="stat-item">W R: {{ quick_wr }}</div>
+                    <div class="stat-item">WinRate: {{ quick_wr }}</div>
                 </div>
             </div>
         </div>
@@ -306,12 +318,19 @@
                 </div>
             </div>
         </div>
-        <div class="section-title">Aliases</div>
-        <div class="aliases">
-            {% for alias in aliases %}
-                <div class="alias">{{ alias }}</div>
-            {% endfor %}
-        </div>
+        <div class="section-title version">🚧Insider preview version: 0.5.0🚧</div>
+        {#        <div class="section-title">Aliases</div>#}
+        {#        <div class="aliases">#}
+        {#            {% for alias in aliases %}#}
+        {#                <div class="alias">{{ alias }}</div>#}
+        {#            {% endfor %}#}
+        {#        </div>#}
+        {#        <div class="section-title">Weapons</div>#}
+        {#        <div class="aliases">#}
+        {#            {% for alias in aliases %}#}
+        {#                <div class="alias">{{ alias }}</div>#}
+        {#            {% endfor %}#}
+        {#        </div>#}
     </div>
 </div>
 
