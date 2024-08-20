@@ -3,9 +3,21 @@ from datetime import datetime
 from enum import Enum as PyEnum
 
 from nonebot_plugin_orm import Model as ORMModel
-from sqlalchemy import INT, String, select, exists, Enum, DateTime
+from sqlalchemy import (
+    INT,
+    String,
+    select,
+    exists,
+    Enum,
+    DateTime,
+    and_,
+    ScalarResult,
+    Text,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
+
+from nonebot_plugin_r6s.utils import log_return_msg
 
 
 class LoginUserSessionBind(ORMModel):
@@ -27,20 +39,20 @@ class LoginUserSessionBind(ORMModel):
     platform: Mapped[str] = mapped_column(
         String(10), nullable=False, comment="Platform"
     )
-    bind_id: Mapped[int] = mapped_column(
+    bind_id: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="Group ID"
     )
-    sessionid: Mapped[int] = mapped_column(
+    sessionid: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="Session ID"
     )
-    key: Mapped[int] = mapped_column(String(255), nullable=False, comment="Session Key")
-    new_key: Mapped[int] = mapped_column(
-        String(255), nullable=False, comment="New Session Key"
+    key: Mapped[str] = mapped_column(Text, nullable=False, comment="Session Key")
+    new_key: Mapped[str] = mapped_column(
+        Text, nullable=False, comment="New Session Key"
     )
-    expiration: Mapped[int] = mapped_column(
+    expiration: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="Expiration"
     )
-    new_expiration: Mapped[int] = mapped_column(
+    new_expiration: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="New Expiration"
     )
     spaceid: Mapped[str] = mapped_column(
@@ -79,11 +91,9 @@ class PermissionGroup(ORMModel):
         comment="ID",
     )
     group_id: Mapped[str] = mapped_column(
-        String(255), nullable=False, comment="Group ID"
+        String(255), nullable=True, comment="Group ID"
     )
-    platform: Mapped[str] = mapped_column(
-        String(10), nullable=False, comment="Platform"
-    )
+    platform: Mapped[str] = mapped_column(String(10), nullable=True, comment="Platform")
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, comment="User ID")
     permission: Mapped[str] = mapped_column(
         Enum(PermissionEnum), nullable=False, comment="Permission (0-5)"
@@ -96,11 +106,33 @@ class PermissionGroup(ORMModel):
     )
 
     @staticmethod
+    @log_return_msg
+    async def get_bot_permission_group(session: AsyncSession) -> Sequence[str]:
+        """
+        Get all SUPERUSER and ADMIN users globally.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+
+        Returns:
+            Sequence[str]: A Sequence of user IDs with SUPERUSER and ADMIN
+            permissions globally.
+        """
+        stmt = select(PermissionGroup.user_id).where(
+            PermissionGroup.permission.in_(["0", "1"])
+        )
+
+        async with session as db_session:
+            return (await db_session.scalars(stmt)).all()
+
+    @staticmethod
+    @log_return_msg
     async def get_group_permission_group(
         session: AsyncSession, group_id: str, platform: str
-    ) -> Sequence[str]:
+    ) -> tuple[Sequence[str], str]:
         """
-        Get all users with permissions in a specific group.
+        Get all SUPERUSER and ADMIN users globally, as well as GROUPOWNER and GROUPADMIN
+        users in a specific group and platform.
 
         Args:
             session (AsyncSession): The database session to use for the operation.
@@ -108,18 +140,34 @@ class PermissionGroup(ORMModel):
             platform (str): The platform associated with the group.
 
         Returns:
-            Sequence[str]: A Sequence of user IDs with permissions in the specified
-            group.
+            Tuple[Sequence[str], str]: A tuple containing a Sequence of user IDs
+            with permissions in the specified group and platform, or globally,
+            and a message describing the result.
         """
+        # 获取全局的 SUPERUSER 和 ADMIN 用户
+        bot_users = await PermissionGroup.get_bot_permission_group(session)
+
+        # 查询指定 group_id 和 platform 下的 GROUPOWNER 和 GROUPADMIN 用户
         stmt = select(PermissionGroup.user_id).where(
-            PermissionGroup.platform == platform,
-            PermissionGroup.group_id == group_id,
-            PermissionGroup.permission.in_(["0", "1", "2", "3"]),
+            and_(
+                PermissionGroup.permission.in_(["2", "3"]),
+                PermissionGroup.platform == platform,
+                PermissionGroup.group_id == group_id,
+            )
         )
+
         async with session as db_session:
-            return (await db_session.scalars(stmt)).all()
+            group_users = (await db_session.scalars(stmt)).all()
+
+        if all_users := bot_users + group_users:
+            return (
+                all_users,
+                f"Permissions retrieved successfully, including {len(all_users)} users",
+            )
+        return [], "No user permissions found"
 
     @staticmethod
+    @log_return_msg
     async def update_group_permission_group(
         session: AsyncSession,
         group_id: str,
@@ -154,7 +202,7 @@ class PermissionGroup(ORMModel):
         )
 
         async with session as db_session:
-            result = await db_session.scalars(stmt)
+            result: ScalarResult[PermissionGroup] = await db_session.scalars(stmt)
             if existing_user := result.first():
                 if existing_user.permission == permission:
                     return False, "User permission already exists"
