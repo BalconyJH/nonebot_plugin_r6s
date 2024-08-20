@@ -11,6 +11,7 @@ from pydantic import BaseModel, model_validator, field_validator
 
 class Config(BaseModel):
     max_retry: int = 3
+    salt: str = "r6s"
     font_name: str = "JetBrains Mono"
     proxy: Optional[str] = None
     resouce_dir: Path = store.get_plugin_data_dir()
@@ -22,7 +23,7 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def ensure_directories_exist(self):
-        directories = [self.font_path, self.image_dir, self.database_dir]
+        directories: list[Path] = [self.font_path, self.image_dir, self.database_dir]
         for directory in directories:
             logger.debug(f"Ensuring directory: {directory}")
             directory.mkdir(parents=True, exist_ok=True)
