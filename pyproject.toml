@@ -49,6 +49,7 @@ dependencies = [
     "emoji>=1.6.3",
     "nonebot-plugin-alconna>=0.49.0",
     "nonebot-plugin-orm[asyncpg]>=0.7.6",
+    "nonebot-plugin-session>=0.3.2",
 ]
 requires-python = ">=3.9"
 license = { text = "GPLv3" }
@@ -64,7 +65,7 @@ adapters = [
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
     { name = "OneBot V12", module_name = "nonebot.adapters.onebot.v12" }
 ]
-plugins = ["nonebot_plugin_htmlrender", "nonebot_plugin_r6s"]
+plugins = ["nonebot_plugin_htmlrender", "nonebot_plugin_r6s", "nonebot_plugin_alconna", "nonebot_plugin_orm", "nonebot_plugin_session", "nonebot_plugin_localstore"]
 plugin_dirs = []
 builtin_plugins = []
 
