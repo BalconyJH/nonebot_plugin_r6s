@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime
 from enum import Enum as PyEnum
+from typing import Optional
 
 from nonebot_plugin_orm import Model as ORMModel
 from sqlalchemy import (
@@ -42,6 +43,9 @@ class LoginUserSessionBind(ORMModel):
     bind_id: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="Group ID"
     )
+    bind_account: Mapped[str] = mapped_column(
+        String(255), nullable=False, comment="Bind User"
+    )
     sessionid: Mapped[str] = mapped_column(
         String(255), nullable=False, comment="Session ID"
     )
@@ -63,10 +67,47 @@ class LoginUserSessionBind(ORMModel):
     )
 
     @staticmethod
-    async def check_user_occupation(session: AsyncSession, bind_id: str) -> bool:
-        stmt = select(exists().where(LoginUserSessionBind.bind_id == bind_id))
+    async def check_user_occupation(
+        session: AsyncSession, bind_id: str, bind_account: str
+    ) -> bool:
+        stmt = select(
+            exists()
+            .where(LoginUserSessionBind.bind_id == bind_id)
+            .where(LoginUserSessionBind.bind_account == bind_account)
+        )
         async with session as db_session:
             return await db_session.scalar(stmt) or False
+
+    @staticmethod
+    async def unbind_user(
+        session: AsyncSession, bind_id: str, bind_account: str
+    ) -> bool:
+        stmt = (
+            select(LoginUserSessionBind)
+            .where(LoginUserSessionBind.bind_id == bind_id)
+            .where(LoginUserSessionBind.bind_account == bind_account)
+        )
+        async with session as db_session:
+            result = await db_session.scalars(stmt)
+            if user := result.first():
+                await db_session.delete(user)
+                await db_session.commit()
+                return True
+            return False
+
+    @staticmethod
+    @log_return_msg
+    async def get_session(
+        session: AsyncSession, bind_id: str
+    ) -> tuple[Optional["LoginUserSessionBind"], str]:
+        stmt = select(LoginUserSessionBind).where(
+            LoginUserSessionBind.bind_id == bind_id
+        )
+        async with session as db_session:
+            result = await db_session.scalars(stmt)
+            if user := result.first():
+                return user, f"Session: {user.ubi_id} retrieved successfully"
+            return None, "No session found"
 
 
 class PermissionEnum(PyEnum):
