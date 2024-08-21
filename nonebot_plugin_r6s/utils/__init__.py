@@ -3,6 +3,7 @@ import json
 import os
 from functools import wraps
 from pathlib import Path
+from time import monotonic
 from types import SimpleNamespace
 from typing import Callable, Any
 
@@ -140,20 +141,37 @@ def log_return_msg(func: Callable) -> Callable:
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
 
-async def on_request_start(
-    session: aiohttp.ClientSession,
-    trace_config_ctx: SimpleNamespace,
-    params: aiohttp.TraceRequestStartParams,
-):
-    logger.debug(f"Starting request: {params.method} {params.url}")
+def create_trace_config() -> aiohttp.TraceConfig:
+    """
+    Creates a TraceConfig object and binds the start and end request callbacks.
 
+    Returns:
+        aiohttp.TraceConfig: Configured trace config with callbacks.
+    """
 
-async def on_request_end(
-    session: aiohttp.ClientSession,
-    trace_config_ctx: SimpleNamespace,
-    params: aiohttp.TraceRequestEndParams,
-):
-    logger.debug(f"Ending request: {params.response.status} {params.url}")
+    async def _on_request_start(
+        session: aiohttp.ClientSession,
+        trace_config_ctx: SimpleNamespace,
+        params: aiohttp.TraceRequestStartParams,
+    ):
+        logger.debug(f"Starting request: {params.method} {params.url}")
+        trace_config_ctx.start_time = monotonic()
+
+    async def _on_request_end(
+        session: aiohttp.ClientSession,
+        trace_config_ctx: SimpleNamespace,
+        params: aiohttp.TraceRequestEndParams,
+    ):
+        elapsed_time = monotonic() - trace_config_ctx.start_time
+        logger.debug(
+            f"Ending request: {params.response.status} {params.url} - Time elapsed: "
+            f"{elapsed_time:.2f} seconds"
+        )
+
+    trace_config = aiohttp.TraceConfig()
+    trace_config.on_request_start.append(_on_request_start)
+    trace_config.on_request_end.append(_on_request_end)
+    return trace_config
 
 
 def drop_file(path: Path) -> None:
