@@ -1,4 +1,5 @@
 import io
+import uuid
 from contextlib import suppress
 from pathlib import Path
 
@@ -7,12 +8,17 @@ from PIL import Image
 from arclet.alconna import Alconna, Subcommand, Args, CommandMeta
 from loguru import logger
 from nonebot import get_driver, require
-from nonebot_plugin_alconna import UniMsg, on_alconna
+from nonebot_plugin_alconna import Match, UniMsg, on_alconna
 from nonebot_plugin_orm import async_scoped_session
 from nonebot_plugin_session import EventSession
 from siegeapi import Auth, InvalidRequest
 
-from .utils import R6sAuth, on_request_start, on_request_end, load_json_file, drop_file
+from .utils import (
+    R6sAuth,
+    load_json_file,
+    drop_file,
+    create_trace_config,
+)
 
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_htmlrender")
@@ -78,52 +84,108 @@ async def bind(
     event_session: EventSession,
     db_session: async_scoped_session,
 ):
-    token = Auth.get_basic_token(email, password)
-    creds_path = Path(plugin_config.cache_dir / "creds" / f"{email}.json")
-
-    trace_config = aiohttp.TraceConfig()
-    trace_config.on_request_start.append(on_request_start)
-    trace_config.on_request_end.append(on_request_end)
+    cache_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, plugin_config.salt)
+    creds_path = Path(plugin_config.cache_dir / "creds" / f"{cache_uuid}.json")
 
     with suppress(InvalidRequest):
-        async with aiohttp.ClientSession(trace_configs=[trace_config]) as session:
+        async with aiohttp.ClientSession(
+            trace_configs=[create_trace_config()]
+        ) as session:
             auth = Auth(
-                token=token,
+                token=Auth.get_basic_token(email, password),
                 creds_path=str(creds_path),
                 session=session,
             )
             auth.save_creds()
             await auth.get_player(
                 name="nonebot_plugin_r6s"
-            )  # A request is required to obtain the creds, why so stupid?
+            )  # A request is needed to obtain the credentials. Idk why.
             await auth.close()
 
-    try:
-        credentials = Credentials.model_validate(await load_json_file(creds_path))
-    except ValueError as e:
-        logger.error(f"Error occurred during the session: {e!s}")
-        await r6s.finish("绑定失败😭")
+    async with db_session() as scoped_session:
+        try:
+            credentials = Credentials.model_validate(await load_json_file(creds_path))
+            scoped_session.add(
+                LoginUserSessionBind(
+                    **credentials.model_dump(),
+                    token=R6sAuth.get_salt_token(email, password, plugin_config.salt),
+                    bind_id=group,
+                    bind_account=event_session.id1,
+                    platform=event_session.platform,
+                )
+            )
+            await scoped_session.commit()
 
-    login_user_session = LoginUserSessionBind(
-        token=R6sAuth.get_salt_token(email, password, plugin_config.salt),
-        ubi_id=credentials.userid,
-        sessionid=credentials.sessionid,
-        expiration=credentials.expiration,
-        new_expiration=credentials.new_expiration,
-        spaceid=credentials.spaceid,
-        profileid=credentials.profileid,
-        key=credentials.key,
-        new_key=credentials.new_key,
-        platform=event_session.platform,
-        bind_id=group,
-    )
-    async with db_session() as db:
-        db.add(login_user_session)
-        await db.commit()
+            drop_file(creds_path)
 
-    drop_file(creds_path)
+        except ValueError as e:
+            logger.error(f"Error occurred during the session: {e!s}")
+            await r6s.finish("绑定失败😭")
+        except Exception as e:
+            await scoped_session.rollback()
+            logger.error(f"Error occurred during the session: {e!s}")
+            await r6s.finish("绑定失败😭")
 
     await r6s.finish("绑定成功🚀🚀")
+
+
+@r6s.assign("unbind")
+async def unbind(
+    bot,
+    event,
+    group: str,
+    event_session: EventSession,
+    db_session: async_scoped_session,
+):
+    if event_session.id1 is None:
+        await r6s.finish("未知的异常🐽")
+    async with db_session() as scoped_session:
+        if not await LoginUserSessionBind.check_user_occupation(
+            scoped_session,
+            group,
+            event_session.id1,
+        ):
+            await r6s.finish("未找到绑定信息🧐")
+        else:
+            await LoginUserSessionBind.unbind_user(
+                scoped_session,
+                group,
+                event_session.id1,
+            )
+            await scoped_session.commit()
+            await r6s.finish("解绑成功🚀🚀")
+
+
+@r6s.assign("search")
+async def search(
+    bot,
+    event,
+    username: str,
+    event_session: EventSession,
+    db_session: async_scoped_session,
+    platform: Match[str],
+):
+    if event_session.id2 is not None:
+        async with db_session() as scoped_session:
+            bind_session, _ = await LoginUserSessionBind.get_session(
+                scoped_session,
+                event_session.id2,
+            )
+        if bind_session is None:
+            await r6s.finish("未找到绑定信息🧐")
+        token = R6sAuth.get_origin_token(bind_session.token, plugin_config.salt)
+        try:
+            async with aiohttp.ClientSession(
+                trace_configs=[create_trace_config()]
+            ) as session:
+                auth = Auth(
+                    token=token,
+                    session=session,
+                )
+                player = await auth.get_player(name=username)
+                await player.load_linked_accounts()
+        except InvalidRequest:
+            await r6s.finish("未找到该用户🧐")
 
 
 # def set_usr_args(matcher: Matcher, event: Event, msg: Message):
