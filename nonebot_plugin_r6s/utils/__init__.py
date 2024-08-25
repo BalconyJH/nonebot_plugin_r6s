@@ -9,6 +9,7 @@ from typing import Callable, Any
 
 import aiohttp
 from aiofiles import open
+from cryptography.fernet import Fernet
 from nonebot import logger
 from siegeapi import Auth
 
@@ -206,3 +207,57 @@ async def load_json_file(path: Path) -> dict:
     """
     async with open(path, encoding="utf-8") as f:
         return json.loads(await f.read())
+
+
+class CredentialsManager:
+    def __init__(self, secret_key: bytes):
+        """
+        Initialize the CredentialsManager instance.
+
+        Args:
+            secret_key (bytes): The key used for encryption and decryption.
+        """
+        self.fernet = Fernet(secret_key)
+
+    @staticmethod
+    def generate_secret_key() -> str:
+        """
+        Generate a new base64 encoded encryption key.
+
+        Returns:
+            str: The encryption key as a base64 encoded string.
+        """
+        return Fernet.generate_key().decode("utf-8")
+
+    def encrypt_credentials(self, username: str, password: str, salt: str) -> str:
+        """
+        Encrypt the user's credentials with a salt.
+
+        Args:
+            username (str): The user's username.
+            password (str): The user's password.
+            salt (str): The salt value used to enhance encryption complexity.
+
+        Returns:
+            str: The encrypted credentials as a base64 encoded string.
+        """
+        credentials = f"{salt}:{username}:{password}".encode()
+        encrypted_credentials = self.fernet.encrypt(credentials)
+        return encrypted_credentials.decode("utf-8")
+
+    def decrypt_credentials(self, encrypted_credentials: str) -> tuple[str, str]:
+        """
+        Decrypt the user's encrypted credentials.
+
+        Args:
+            encrypted_credentials (str): The encrypted credentials as a base64
+            encoded string.
+
+        Returns:
+            Tuple[str, str]: The decrypted (username, password) tuple.
+        """
+        decrypted_credentials = self.fernet.decrypt(
+            encrypted_credentials.encode("utf-8")
+        )
+        _, username, password = decrypted_credentials.decode("utf-8").split(":", 2)
+        return username, password
