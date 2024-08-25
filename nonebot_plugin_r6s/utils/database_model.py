@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from typing import Optional
 
+from nonebot import logger
 from nonebot_plugin_orm import Model as ORMModel
 from sqlalchemy import (
     INT,
@@ -14,11 +15,11 @@ from sqlalchemy import (
     and_,
     ScalarResult,
     Text,
+    Boolean,
 )
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
-
-from nonebot_plugin_r6s.utils import log_return_msg
 
 
 class LoginUserSessionBind(ORMModel):
@@ -96,18 +97,19 @@ class LoginUserSessionBind(ORMModel):
             return False
 
     @staticmethod
-    @log_return_msg
     async def get_session(
         session: AsyncSession, bind_id: str
-    ) -> tuple[Optional["LoginUserSessionBind"], str]:
+    ) -> Optional["LoginUserSessionBind"]:
         stmt = select(LoginUserSessionBind).where(
             LoginUserSessionBind.bind_id == bind_id
         )
         async with session as db_session:
             result = await db_session.scalars(stmt)
             if user := result.first():
-                return user, f"Session: {user.ubi_id} retrieved successfully"
-            return None, "No session found"
+                logger.info(f"Session found for group '{bind_id}'")
+                return user
+            logger.warning(f"No session found for group '{bind_id}'")
+            return None
 
 
 class PermissionEnum(PyEnum):
@@ -147,7 +149,6 @@ class PermissionGroup(ORMModel):
     )
 
     @staticmethod
-    @log_return_msg
     async def get_bot_permission_group(session: AsyncSession) -> Sequence[str]:
         """
         Get all SUPERUSER and ADMIN users globally.
@@ -167,10 +168,9 @@ class PermissionGroup(ORMModel):
             return (await db_session.scalars(stmt)).all()
 
     @staticmethod
-    @log_return_msg
     async def get_group_permission_group(
         session: AsyncSession, group_id: str, platform: str
-    ) -> tuple[Sequence[str], str]:
+    ) -> Sequence[str]:
         """
         Get all SUPERUSER and ADMIN users globally, as well as GROUPOWNER and GROUPADMIN
         users in a specific group and platform.
@@ -186,7 +186,7 @@ class PermissionGroup(ORMModel):
             and a message describing the result.
         """
         # 获取全局的 SUPERUSER 和 ADMIN 用户
-        bot_users = await PermissionGroup.get_bot_permission_group(session)
+        bot_users = list(await PermissionGroup.get_bot_permission_group(session))
 
         # 查询指定 group_id 和 platform 下的 GROUPOWNER 和 GROUPADMIN 用户
         stmt = select(PermissionGroup.user_id).where(
@@ -198,68 +198,261 @@ class PermissionGroup(ORMModel):
         )
 
         async with session as db_session:
-            group_users = (await db_session.scalars(stmt)).all()
+            group_users = list((await db_session.scalars(stmt)).all())
 
         if all_users := bot_users + group_users:
-            return (
-                all_users,
-                f"Permissions retrieved successfully, including {len(all_users)} users",
-            )
-        return [], "No user permissions found"
+            logger.info(f"Permissions found, users length: {len(all_users)}")
+            return all_users
+        logger.warning("No permissions found")
+        return []
 
     @staticmethod
-    @log_return_msg
     async def update_group_permission_group(
         session: AsyncSession,
         group_id: str,
         platform: str,
         user_id: str,
         permission: str,
-    ) -> tuple[bool, str]:
+    ) -> bool:
         """
-        Update or add user permission in a specific group.
-
-        This method checks if the user already has a permission in the specified group.
-        If the user exists and the permission is different, it updates the permission.
-        If the user does not exist, it adds a new permission record.
+        Update the permission of a user in a group and platform.
 
         Args:
             session (AsyncSession): The database session to use for the operation.
             group_id (str): The ID of the group.
             platform (str): The platform associated with the group.
-            user_id (str): The ID of the user whose permission is being updated or
-            added.
-            permission (str): The permission level to be set for the user.
+            user_id (str): The ID of the user.
+            permission (str): The new permission level.
 
         Returns:
-            Tuple[bool, str]: A tuple containing a boolean indicating success or
-            failure,
-            and a string message describing the result of the operation.
+            bool: A boolean indicating success or failure.
         """
-        stmt = select(PermissionGroup).where(
-            PermissionGroup.platform == platform,
-            PermissionGroup.group_id == group_id,
-            PermissionGroup.user_id == user_id,
+        stmt = (
+            select(PermissionGroup)
+            .where(PermissionGroup.platform == platform)
+            .where(PermissionGroup.group_id == group_id)
+            .where(PermissionGroup.user_id == user_id)
         )
 
         async with session as db_session:
-            result: ScalarResult[PermissionGroup] = await db_session.scalars(stmt)
-            if existing_user := result.first():
-                if existing_user.permission == permission:
-                    return False, "User permission already exists"
-                existing_user.permission = permission
-                existing_user.updated_at = datetime.now()
-                await db_session.commit()
-                return True, "User permission updated successfully"
+            try:
+                result: ScalarResult[PermissionGroup] = await db_session.scalars(stmt)
+                if existing_user := result.first():
+                    if existing_user.permission == permission:
+                        logger.info(
+                            f"User '{user_id}' in group '{group_id}' already has "
+                            f"permission '{permission}'"
+                        )
+                        return False
+                    existing_user.permission = permission
+                    existing_user.updated_at = datetime.now()
+                    await db_session.commit()
+                    logger.info(
+                        f"Updated user permission for '{user_id}' in group '{group_id}'"
+                    )
+                    return True
 
-            new_user = PermissionGroup(
-                group_id=group_id,
-                platform=platform,
-                user_id=user_id,
-                permission=permission,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
-            )
-            db_session.add(new_user)
-            await db_session.commit()
-            return True, "User permission added successfully"
+                new_user = PermissionGroup(
+                    group_id=group_id,
+                    platform=platform,
+                    user_id=user_id,
+                    permission=permission,
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                )
+                db_session.add(new_user)
+                await db_session.commit()
+                logger.info(
+                    f"Added user permission for '{user_id}' in group '{group_id}'"
+                )
+                return True
+            except SQLAlchemyError:
+                await db_session.rollback()
+                logger.exception(
+                    f"Failed to update or add user permission for '{user_id}' in "
+                    f"group '{group_id}'"
+                )
+                return False
+
+
+class EncryptionKey(ORMModel):
+    id: Mapped[int] = mapped_column(
+        INT,
+        nullable=False,
+        primary_key=True,
+        autoincrement=True,
+        index=True,
+        comment="ID",
+    )
+    key_name: Mapped[str] = mapped_column(
+        String(255), nullable=True, comment="Key Name", unique=True
+    )
+    secret_key: Mapped[str] = mapped_column(Text, nullable=False, comment="Session Key")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, comment="Created At"
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, comment="Updated At"
+    )
+    active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+        comment="Key Active State",
+    )
+    description: Mapped[str] = mapped_column(
+        String(255), nullable=True, comment="Description"
+    )
+
+    @staticmethod
+    async def get_encryption_key(
+        session: AsyncSession, key_name: str
+    ) -> Optional["EncryptionKey"]:
+        """
+        Get an encryption key by its name.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            key_name (str): The name of the encryption key to retrieve.
+
+        Returns:
+            Tuple[Optional["EncryptionKey"], str]: A tuple containing the encryption key
+            object if found, or None if not found, and a message describing the result.
+        """
+        stmt = (
+            select(EncryptionKey)
+            .where(EncryptionKey.active == True)  # noqa: E712
+            .where(EncryptionKey.key_name == key_name)
+        )
+        async with session as db_session:
+            result = await db_session.scalars(stmt)
+            if key := result.first():
+                logger.info(f"Retrieved encryption key '{key_name}'")
+                return key
+            logger.warning(f"Encryption key '{key_name}' not found")
+            return None
+
+    @staticmethod
+    async def update_encryption_key(
+        session: AsyncSession,
+        key_name: str,
+        secret_key: Optional[str] = None,
+        description: Optional[str] = None,
+        active: bool = True,
+    ) -> bool:
+        """
+        Update an encryption key by its name.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            key_name (str): The name of the encryption key to update.
+            secret_key (Optional[str], optional): The new secret key value.
+            Defaults to None.
+            description (Optional[str], optional): The new description of the encryption
+            key. Defaults to None.
+            active (bool, optional): The new active state of the encryption key.
+            Defaults to True.
+
+        Returns:
+            bool: A boolean indicating success or failure.
+        """
+        stmt = select(EncryptionKey).where(EncryptionKey.key_name == key_name)
+        async with session as db_session:
+            try:
+                result = await db_session.scalars(stmt)
+                if existing_key := result.first():
+                    if secret_key is not None:
+                        existing_key.secret_key = secret_key
+                    if description is not None:
+                        existing_key.description = description
+                    if active is not None:
+                        existing_key.active = active
+
+                    existing_key.updated_at = datetime.now()
+                    await db_session.commit()
+                    logger.info(f"Updated encryption key '{key_name}'")
+                    return True
+                else:
+                    logger.warning(f"Encryption key '{key_name}' not found")
+                    return False
+            except SQLAlchemyError:
+                await db_session.rollback()
+                logger.exception(f"Failed to update or add encryption key '{key_name}'")
+                return False
+
+    @staticmethod
+    async def delete_encryption_key(session: AsyncSession, key_name: str) -> bool:
+        """
+        Delete an encryption key by its name.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            key_name (str): The name of the encryption key to delete.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+            failure, and a string message describing the result of the operation.
+        """
+        stmt = select(EncryptionKey).where(EncryptionKey.key_name == key_name)
+        async with session as db_session:
+            try:
+                result = await db_session.scalars(stmt)
+                if key := result.first():
+                    await db_session.delete(key)
+                    await db_session.commit()
+                    logger.info(f"Deleted encryption key '{key_name}'")
+                    return True
+                logger.warning(f"Encryption key '{key_name}' not found")
+                return False
+            except SQLAlchemyError:
+                await db_session.rollback()
+                logger.exception(f"Failed to delete encryption key '{key_name}'")
+                return False
+
+    @staticmethod
+    async def add_encryption_key(
+        session: AsyncSession,
+        key_name: str,
+        secret_key: str,
+        description: Optional[str] = None,
+        active: bool = True,
+    ) -> bool:
+        """
+        Add a new encryption key.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            key_name (str): The name of the encryption key.
+            secret_key (str): The secret key value.
+            description (Optional[str], optional): A description of the encryption key.
+            Defaults to None.
+            active (bool, optional): The active state of the encryption key.
+            Defaults to True.
+
+        Returns:
+            bool: A boolean indicating success or failure.
+        """
+        stmt = select(EncryptionKey).where(EncryptionKey.key_name == key_name)
+        async with session as db_session:
+            try:
+                result = await db_session.scalars(stmt)
+                if result.first():
+                    logger.warning(f"Encryption key '{key_name}' already exists")
+                    return False
+                now = datetime.now()
+                new_key = EncryptionKey(
+                    key_name=key_name,
+                    secret_key=secret_key,
+                    description=description,
+                    active=active,
+                    created_at=now,
+                    updated_at=now,
+                )
+                db_session.add(new_key)
+                await db_session.commit()
+                logger.info(f"Added encryption key '{key_name}'")
+                return True
+            except SQLAlchemyError:
+                await db_session.rollback()
+                logger.exception(f"Failed to add encryption key '{key_name}'")
+                return False
