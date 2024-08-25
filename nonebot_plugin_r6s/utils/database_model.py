@@ -71,6 +71,17 @@ class LoginUserSessionBind(ORMModel):
     async def check_user_occupation(
         session: AsyncSession, bind_id: str, bind_account: str
     ) -> bool:
+        """
+        Check if a user is already bound to a group.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            bind_id (str): The ID of the group.
+            bind_account (str): The ID of the user.
+
+        Returns:
+            bool: A boolean indicating whether the user is already bound to the
+        """
         stmt = select(
             exists()
             .where(LoginUserSessionBind.bind_id == bind_id)
@@ -83,6 +94,17 @@ class LoginUserSessionBind(ORMModel):
     async def unbind_user(
         session: AsyncSession, bind_id: str, bind_account: str
     ) -> bool:
+        """
+        Unbind a user from a group.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            bind_id (str): The ID of the group.
+            bind_account (str): The ID of the user.
+
+        Returns:
+            bool: A boolean indicating success or failure.
+        """
         stmt = (
             select(LoginUserSessionBind)
             .where(LoginUserSessionBind.bind_id == bind_id)
@@ -100,6 +122,17 @@ class LoginUserSessionBind(ORMModel):
     async def get_session(
         session: AsyncSession, bind_id: str
     ) -> Optional["LoginUserSessionBind"]:
+        """
+        Get a session by its group ID.
+
+        Args:
+            session (AsyncSession): The database session to use for the operation.
+            bind_id (str): The ID of the group.
+
+        Returns:
+            Optional["LoginUserSessionBind"]: The session object if found, or None if
+            not found.
+        """
         stmt = select(LoginUserSessionBind).where(
             LoginUserSessionBind.bind_id == bind_id
         )
@@ -185,10 +218,8 @@ class PermissionGroup(ORMModel):
             with permissions in the specified group and platform, or globally,
             and a message describing the result.
         """
-        # 获取全局的 SUPERUSER 和 ADMIN 用户
         bot_users = list(await PermissionGroup.get_bot_permission_group(session))
 
-        # 查询指定 group_id 和 platform 下的 GROUPOWNER 和 GROUPADMIN 用户
         stmt = select(PermissionGroup.user_id).where(
             and_(
                 PermissionGroup.permission.in_(["2", "3"]),
@@ -225,7 +256,8 @@ class PermissionGroup(ORMModel):
             permission (str): The new permission level.
 
         Returns:
-            bool: A boolean indicating success or failure.
+            bool: True if the permission was updated, False if the update was not needed
+            or if an error occurred.
         """
         stmt = (
             select(PermissionGroup)
@@ -237,39 +269,32 @@ class PermissionGroup(ORMModel):
         async with session as db_session:
             try:
                 result: ScalarResult[PermissionGroup] = await db_session.scalars(stmt)
-                if existing_user := result.first():
-                    if existing_user.permission == permission:
-                        logger.info(
-                            f"User '{user_id}' in group '{group_id}' already has "
-                            f"permission '{permission}'"
-                        )
-                        return False
-                    existing_user.permission = permission
-                    existing_user.updated_at = datetime.now()
-                    await db_session.commit()
-                    logger.info(
-                        f"Updated user permission for '{user_id}' in group '{group_id}'"
-                    )
-                    return True
+                existing_user: Optional[PermissionGroup] = result.first()
 
-                new_user = PermissionGroup(
-                    group_id=group_id,
-                    platform=platform,
-                    user_id=user_id,
-                    permission=permission,
-                    created_at=datetime.now(),
-                    updated_at=datetime.now(),
-                )
-                db_session.add(new_user)
+                if not existing_user:
+                    logger.warning(f"User '{user_id}' in group '{group_id}' not found")
+                    return False
+
+                if existing_user.permission == permission:
+                    logger.info(
+                        f"User '{user_id}' in group '{group_id}' already has "
+                        f"permission '{permission}'"
+                    )
+                    return False
+
+                existing_user.permission = permission
+                existing_user.updated_at = datetime.now()
                 await db_session.commit()
+
                 logger.info(
-                    f"Added user permission for '{user_id}' in group '{group_id}'"
+                    f"Updated user permission for '{user_id}' in group '{group_id}'"
                 )
                 return True
+
             except SQLAlchemyError:
                 await db_session.rollback()
                 logger.exception(
-                    f"Failed to update or add user permission for '{user_id}' in "
+                    f"Failed to update user permission for '{user_id}' in "
                     f"group '{group_id}'"
                 )
                 return False
