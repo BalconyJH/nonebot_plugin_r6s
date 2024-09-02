@@ -1,14 +1,13 @@
-import io
 import uuid
 from contextlib import suppress
 from pathlib import Path
 
+import aiofiles
 import aiohttp
-from PIL import Image
 from arclet.alconna import Alconna, Subcommand, Args, CommandMeta
 from loguru import logger
 from nonebot import get_driver, require
-from nonebot_plugin_alconna import Match, UniMsg, on_alconna
+from nonebot_plugin_alconna import Match, UniMsg, on_alconna, Image
 from nonebot_plugin_orm import async_scoped_session
 from nonebot_plugin_session import EventSession
 from siegeapi import Auth, InvalidRequest
@@ -25,10 +24,9 @@ require("nonebot_plugin_htmlrender")
 require("nonebot_plugin_orm")
 
 from .utils.database_model import LoginUserSessionBind
-from .utils.model import PlayerData, Credentials
+from .utils.model import Credentials
 from .config import plugin_config
-from nonebot_plugin_htmlrender import template_to_pic
-from .utils.data import data
+from nonebot_plugin_htmlrender import md_to_pic
 
 # r6s = on_command(
 #     "r6s", aliases={"彩六", "彩虹六号", "r6", "R6"}, priority=5, block=True
@@ -188,6 +186,17 @@ async def search(
             await r6s.finish("未找到该用户🧐")
 
 
+@r6s.assign("protocol")
+async def _():
+    md = Path(__file__).parent / "templates" / "agreement.md"
+    async with aiofiles.open(md, encoding="utf-8") as file:
+        agreement_content = await file.read()
+
+    pic = await md_to_pic(md=agreement_content)
+
+    await r6s.finish(Image(raw=pic))
+
+
 # def set_usr_args(matcher: Matcher, event: Event, msg: Message):
 #     if msg.extract_plain_text():
 #         matcher.set_arg("username", msg)
@@ -222,18 +231,18 @@ async def search(
 #     set_usr_args(matcher, event, msg)
 
 
-@r6s.handle()
-async def _():
-    data_model = PlayerData(**data).model_dump()
-    img = await template_to_pic(
-        str(Path(__file__).parent / "templates"),
-        "test.jinja",
-        data_model,
-        pages={
-            "viewport": {"width": 1300, "height": 650},
-        },
-    )
-    Image.open(io.BytesIO(img)).show()
+# @r6s.handle()
+# async def _():
+#     data_model = PlayerData(**data).model_dump()
+#     img = await template_to_pic(
+#         str(Path(__file__).parent / "templates"),
+#         "test.jinja",
+#         data_model,
+#         pages={
+#             "viewport": {"width": 1300, "height": 650},
+#         },
+#     )
+#     Image.open(io.BytesIO(img)).show()
 
 
 # @r6s_pro.handle()
