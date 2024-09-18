@@ -1,3 +1,9 @@
+from nonebot import require
+
+require("nonebot_plugin_localstore")
+require("nonebot_plugin_htmlrender")
+require("nonebot_plugin_orm")
+
 import uuid
 from contextlib import suppress
 from pathlib import Path
@@ -6,8 +12,8 @@ import aiofiles
 import aiohttp
 from arclet.alconna import Alconna, Subcommand, Args, CommandMeta
 from loguru import logger
-from nonebot import get_driver, require
 from nonebot_plugin_alconna import Match, UniMsg, on_alconna, Image
+from nonebot import get_driver
 from nonebot_plugin_orm import async_scoped_session
 from nonebot_plugin_session import EventSession
 from siegeapi import Auth, InvalidRequest
@@ -18,10 +24,6 @@ from .utils import (
     drop_file,
     create_trace_config,
 )
-
-require("nonebot_plugin_localstore")
-require("nonebot_plugin_htmlrender")
-require("nonebot_plugin_orm")
 
 from .utils.database_model import LoginUserSessionBind
 from .utils.model import Credentials
