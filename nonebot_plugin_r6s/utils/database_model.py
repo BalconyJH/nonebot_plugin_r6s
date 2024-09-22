@@ -119,7 +119,7 @@ class LoginUserSessionBind(ORMModel):
             return False
 
     @staticmethod
-    async def get_session(
+    async def get_session_by_bind_id(
         session: AsyncSession, bind_id: str
     ) -> Optional["LoginUserSessionBind"]:
         """
@@ -130,19 +130,22 @@ class LoginUserSessionBind(ORMModel):
             bind_id (str): The ID of the group.
 
         Returns:
-            Optional["LoginUserSessionBind"]: The session object if found, or None if
-            not found.
+            Optional["LoginUserSessionBind"]: The bind_session object if found, or None
+            if not found.
         """
         stmt = select(LoginUserSessionBind).where(
             LoginUserSessionBind.bind_id == bind_id
         )
         async with session as db_session:
             result = await db_session.scalars(stmt)
-            if user := result.first():
+            bind_session = result.first()
+
+            if bind_session:
                 logger.info(f"Session found for group '{bind_id}'")
-                return user
-            logger.warning(f"No session found for group '{bind_id}'")
-            return None
+            else:
+                logger.warning(f"No session found for group '{bind_id}'")
+
+            return bind_session
 
 
 class PermissionEnum(PyEnum):
