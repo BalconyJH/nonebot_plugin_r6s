@@ -67,7 +67,7 @@ adapters = [
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
     { name = "OneBot V12", module_name = "nonebot.adapters.onebot.v12" }
 ]
-plugins = []
+plugins = ["nonebot_plugin_r6s"]
 plugin_dirs = []
 builtin_plugins = []
 
