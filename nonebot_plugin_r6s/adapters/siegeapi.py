@@ -5,14 +5,20 @@ from aiohttp import ClientSession
 from nonebot import logger
 from siegeapi import Auth, Player
 
-from nonebot_plugin_r6s.utils.model import PlayerInfo, LinkAccount, UserPreferences
+from nonebot_plugin_r6s.utils import win_rate, kd_parser
+from nonebot_plugin_r6s.utils.model import (
+    PlayerInfo,
+    LinkAccount,
+    UserPreferences,
+    RankStats,
+)
 
 T = TypeVar("T", bound="SiegeAPI")
 
 
 class SiegeAPI(Auth):
-    def __init__(self, email: str, password: str, session: ClientSession):
-        super().__init__(email, password, session=session)
+    def __init__(self, token: str, session: ClientSession, **kwargs):
+        super().__init__(token=token, session=session, extra_get_kwargs=kwargs)
         self.player = None
         self.player_name = None
         self.linked_accounts = None
@@ -20,18 +26,17 @@ class SiegeAPI(Auth):
     @classmethod
     async def with_player_by_name(
         cls: type[T],
-        email: str,
-        password: str,
+        token: str,
         session: ClientSession,
         name: str,
         platform: Literal["uplay", "xbl", "psn"] = "uplay",
+        **kwargs,
     ) -> T:
         """
         Create a SiegeAPI instance with a player by name.
 
         Args:
-            email (str): Ubisoft account email.
-            password (str): Ubisoft account password.
+            token (str): Ubisoft account token.
             session (ClientSession): aiohttp client session.
             name (str): Player name.
             platform (Literal["uplay", "xbl", "psn"], optional): Platform. Defaults
@@ -40,26 +45,24 @@ class SiegeAPI(Auth):
         Returns:
             SiegeAPI: SiegeAPI instance.
         """
-        instance = cls(email, password, session)
-        cls.player_name = name
+        instance = cls(token=token, session=session, **kwargs)
         instance.player = await instance.get_player(name=name, platform=platform)
         return instance
 
     @classmethod
     async def with_player_by_uid(
         cls: type[T],
-        email: str,
-        password: str,
+        token: str,
         session: ClientSession,
         uid: str,
         platform: Literal["uplay", "xbl", "psn"] = "uplay",
+        **kwargs,
     ) -> T:
         """
         Create a SiegeAPI instance with a player by UID.
 
         Args:
-            email (str): Ubisoft account email.
-            password (str): Ubisoft account password.
+            token (str): Ubisoft account token.
             session (ClientSession): aiohttp client session.
             uid (str): Player UID.
             platform (Literal["uplay", "xbl", "psn"], optional): Platform. Defaults
@@ -68,28 +71,26 @@ class SiegeAPI(Auth):
         Returns:
             SiegeAPI: SiegeAPI instance.
         """
-        instance = cls(email, password, session)
+        instance = cls(token=token, session=session, **kwargs)
         instance.player = await instance.get_player(uid=uid, platform=platform)
         return instance
 
     async def load_data(self):
-        try:
-            if self.player is not None:
-                results = await asyncio.gather(
-                    self.player.load_linked_accounts(),
-                    self.player.load_ranked_v2(),
-                    self.player.load_playtime(),
-                    self.player.load_progress(),
-                    self.player.load_persona(),
-                    return_exceptions=True,
-                )
-                for i, result in enumerate(results):
-                    if isinstance(result, ValueError):
-                        logger.error(f"Task {i} raised an exception: {result}")
-        except Exception:
-            logger.exception(
-                f"An error occurred while loading player: {self.player_name} data"
+        if self.player is not None:
+            results = await asyncio.gather(
+                self.player.load_linked_accounts(),
+                self.player.load_ranked_v2(),
+                self.player.load_playtime(),
+                self.player.load_progress(),
+                self.player.load_persona(),
+                # self.player.load_summaries(),
+                return_exceptions=True,
             )
+            for i, result in enumerate(results):
+                if isinstance(result, ValueError):
+                    logger.error(f"Task {i} raised an exception: {result}")
+        else:
+            logger.warning(f"Player is None, cannot load data for {self.player_name}")
 
     @overload
     async def fetch_player(
@@ -156,4 +157,33 @@ class SiegeAPI(Auth):
             total_time_played=self.player.total_time_played_hours,
             aliases=[""],  # TODO: Add aliases(Upstream unsupported)
             persona=await self.load_persona(),
+        )
+
+    async def load_rank_stats(self):
+        if not self.player:
+            raise ValueError(
+                "Player is not set. Please use get_player() to fetch a player first."
+            )
+
+        if not self.player.ranked_profile:
+            raise ValueError(
+                "Player does not have ranked profile. "
+                "Please use load_ranked_v2() to fetch ranked profile first."
+            )
+
+        wr = win_rate(
+            self.player.ranked_profile.wins, self.player.ranked_profile.losses
+        )
+        kd = kd_parser(
+            self.player.ranked_profile.kills,
+            self.player.ranked_profile.deaths,
+        )
+
+        return RankStats(
+            wins=self.player.ranked_profile.wins,
+            losses=self.player.ranked_profile.losses,
+            wr=f"{wr:.2%}",
+            kd=kd,
+            kills=self.player.ranked_profile.kills,
+            deaths=self.player.ranked_profile.deaths,
         )
