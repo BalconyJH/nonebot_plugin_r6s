@@ -6,7 +6,9 @@ Rainbow Six Siege Players Searcher For Nonebot2
 
 </div>
 
-</div>
+> [!WARNING]
+> 由于 [Ubisoft API](https://www.ubisoft.com/en-us/game/rainbow-six/siege/stats)
+> 持续维护中，该插件目前已停止全部分支的维护
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/abrahum/nonebot-plugin-r6s/master/LICENSE">
@@ -20,12 +22,14 @@ Rainbow Six Siege Players Searcher For Nonebot2
 
 ## 使用方法
 
-``` zsh
+```zsh
 nb plugin install nonebot-plugin-r6s // or
 pip install --upgrade nonebot-plugin-r6s
 ```
+
 在 Nonebot2 入口文件（例如 bot.py ）增加：
-``` python
+
+```python
 nonebot.load_plugin("nonebot_plugin_r6s")
 ```
 
@@ -45,12 +49,12 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 
 - 增加玩家基本信息以及进阶信息数据:
   > 玩家基本信息: 更新玩家当前赛季非排以及当前赛季排位MMR分数  
-  玩家进阶信息:   
-  1.将非排和排位数据中MMR更新为当前赛季MMR  
-  2.新增最高段位赛季数据 最高MMR和结束赛季时最终MMR 胜场以及负场
+  > 玩家进阶信息:  
+  > 1.将非排和排位数据中MMR更新为当前赛季MMR  
+  > 2.新增最高段位赛季数据 最高MMR和结束赛季时最终MMR 胜场以及负场
 - 修复已知BUG:
   > 修复因玩家头像获取不到导致的出错  
-  修复因干员头像获取不到导致的出错
+  > 修复因干员头像获取不到导致的出错
 
 > Thanks for [#6](https://github.com/abrahum/nonebot_plugin_r6s/pull/6)
 
@@ -71,7 +75,7 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 
 ### 0.2.2
 
-- ground 数据源失效，暂时完全切换回 r6scn ，部分无法查询问题会重现。*2021.05.24*
+- ground 数据源失效，暂时完全切换回 r6scn ，部分无法查询问题会重现。_2021.05.24_
 
 ### 0.2.1
 
@@ -89,4 +93,3 @@ nonebot.load_plugin("nonebot_plugin_r6s")
 [nonebot/nonebot2](https://github.com/nonebot/nonebot2/)：简单好用，扩展性极强的 Bot 框架
 
 [Mrs4s/go-cqhttp](https://github.com/Mrs4s/go-cqhttp)：更新迭代快如疯狗的 [OneBot](https://github.com/howmanybots/onebot/blob/master/README.md) Golang 原生实现
-
