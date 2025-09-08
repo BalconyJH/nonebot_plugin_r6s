@@ -17,6 +17,11 @@ dependencies = [
     "ujson>=5.0.0,<6.0.0",
     "httpx>=0.28.0, <1.0.0",
     "Pillow>=11.0, <12.0",
+    "nonebot-plugin-alconna>=0.59.4",
+    "nonebot-plugin-localstore>=0.7.4",
+    "nonebot-plugin-orm>=0.8.2",
+    "nonebot-plugin-uninfo>=0.9.0",
+    "nonebot-plugin-htmlrender>=0.6.7",
 ]
 
 [project.urls]
