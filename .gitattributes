@@ -1,3 +1,0 @@
-*.ttf !text !filter !merge !diff
-*.otf !text !filter !merge !diff
-*.ttc !text !filter !merge !diff
