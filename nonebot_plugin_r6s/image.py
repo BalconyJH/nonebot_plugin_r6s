@@ -56,13 +56,13 @@ async def draw_head(img: IMG, player: Player, title: str) -> IMGDraw:
 
     paste_with_alpha(img, avatar, (40, 40))
     draw = ImageDraw.Draw(img)
-    draw.text((200, 20), player.username, fill="black", font=GEN_WAN_MIN)
-    draw.text((200, 100), title, fill="black", font=GEN_WAN_MIN)
+    draw.text((200, 20), player.username, fill="#ffffff", font=GEN_WAN_MIN)
+    draw.text((200, 100), title, fill="#ffffff", font=GEN_WAN_MIN)
     return draw
 
 
 async def base_image(player: Player) -> IMG:
-    image = Image.new("RGBA", (800, 420), color="white")
+    image = Image.new("RGBA", (800, 420), color="#1c1c1c")
     draw = await draw_head(image, player, "基础信息")
 
     ranked_mmr = "-" if player.ranked_stat is None else player.ranked_stat.mmr
@@ -76,7 +76,7 @@ async def base_image(player: Player) -> IMG:
         f"总局数: {player.gerneral_stat.played}\n"
         f"总时长: {player.gerneral_stat.timePlayed / 3600:.2f}\n"
         f"赛季排位MMR: {str(ranked_mmr).split('.')[0]}",
-        fill="black",
+        fill="#ffffff",
         font=GEN_WAN_MIN_S,
         spacing=20,
     )
@@ -86,7 +86,7 @@ async def base_image(player: Player) -> IMG:
         f"总胜率: {player.gerneral_stat.win_rate()}\n"
         f"排位时长: {ranked_time}\n"
         f"赛季非排MMR: {str(player.casual_stat.mmr).split('.')[0]}",
-        fill="black",
+        fill="#ffffff",
         font=GEN_WAN_MIN_S,
         spacing=20,
     )
@@ -114,7 +114,7 @@ async def detail_image(player: Player) -> IMG:
                 f"赛季MMR: {str(stat.mmr).split('.')[0]}\n"
                 f"KD:  {stat.kd()}\n"
                 f"胜率：{stat.win_rate()}",
-                fill="black",
+                fill="#ffffff",
                 font=GEN_WAN_MIN_S,
                 spacing=20,
             )
@@ -122,7 +122,7 @@ async def detail_image(player: Player) -> IMG:
                 (510, offset + 20),
                 f"局数: {stat.played}\n" + f"时长: {stat.timePlayed / 3600:.2f}",
                 # + (f"\n历史最高MMR: {int(player.history_max_mmr)}" if has_rank else ""),
-                fill="black",
+                fill="#ffffff",
                 font=GEN_WAN_MIN_S,
                 spacing=20,
             )
@@ -132,34 +132,34 @@ async def detail_image(player: Player) -> IMG:
                 f"历史最高MMR: {str(player.history_max_mmr_season['max_mmr']).split('.')[0]}\n"
                 f"赛季最终MMR: {str(player.history_max_mmr_season['mmr']).split('.')[0]}\n"
                 f"胜场：{player.history_max_mmr_season['wins']}",
-                fill="black",
+                fill="#ffffff",
                 font=GEN_WAN_MIN_S,
                 spacing=20,
             )
             draw.multiline_text(
                 (510, offset + 20),
                 f"\n\n" + f"败场: {player.history_max_mmr_season['losses']}",
-                fill="black",
+                fill="#ffffff",
                 font=GEN_WAN_MIN_S,
                 spacing=20,
             )
 
-    image = Image.new("RGBA", (900, 940 if player.ranked_stat else 440), color="white")
+    image = Image.new("RGBA", (900, 940 if player.ranked_stat else 440), color="#1c1c1c")
     draw = await draw_head(image, player, "详细信息")
     str_len = GEN_WAN_MIN_S.getsize("— 非排数据 —")[0]
-    draw.text((400 - str_len // 2, 190), "— 非排数据 —", fill="black", font=GEN_WAN_MIN_S)
+    draw.text((400 - str_len // 2, 190), "— 非排数据 —", fill="#ffffff", font=GEN_WAN_MIN_S)
     draw_rank(image, draw, player.casual_stat, 240)
     if player.ranked_stat is not None:
         str_len = GEN_WAN_MIN_S.getsize("— 排位数据 —")[0]
         draw.text(
-            (400 - str_len // 2, 440), "— 排位数据 —", fill="black", font=GEN_WAN_MIN_S
+            (400 - str_len // 2, 440), "— 排位数据 —", fill="#ffffff", font=GEN_WAN_MIN_S
         )
         draw_rank(image, draw, player.ranked_stat, 490)
     str_len = GEN_WAN_MIN_S.getsize("- 最高段位数据 -")[0]
     draw.text(
         (400 - str_len // 2, 690 if player.ranked_stat is not None else 440),
         "- 最高段位数据 -",
-        fill="black",
+        fill="#ffffff",
         font=GEN_WAN_MIN_S,
     )
     draw_rank(
@@ -212,14 +212,14 @@ async def plays_image(player: Player) -> IMG:
         draw.multiline_text(
             (190, offset + 70),
             f"胜场: {stat.wins}\n" f"最终MMR: {str(stat.mmr).split('.')[0]}",
-            fill="black",
+            fill="#ffffff",
             font=GEN_WAN_MIN_S,
             spacing=20,
         )
         draw.multiline_text(
             (495, offset + 70),
             f"败场: {stat.losses}\n" f"最高MMR: {str(stat.max_mmr).split('.')[0]}",
-            fill="black",
+            fill="#ffffff",
             font=GEN_WAN_MIN_S,
             spacing=20,
         )
@@ -232,7 +232,7 @@ async def plays_image(player: Player) -> IMG:
             if player.season_rank.__len__() > 3
             else 700,
         ),
-        color="white",
+        color="#1c1c1c",
     )
     draw = await draw_head(image, player, "历史段位")
     for (i, stat) in enumerate(player.season_rank):
@@ -241,7 +241,7 @@ async def plays_image(player: Player) -> IMG:
         draw.text(
             (400 - len_ // 2, 200 * (i + 1)),
             f"— {season} —",
-            fill="black",
+            fill="#ffffff",
             font=GEN_WAN_MIN_S,
         )
         draw_play(image, draw, stat, 190 + i * 200)
@@ -260,12 +260,12 @@ async def operators_img(player: Player) -> IMG:
             f"时长: {operator.timePlayed / 3600:.1f}\n"
             f"KD: {operator.kd()}\n"
             f"胜率: {operator.win_rate()}",
-            fill="black",
+            fill="#ffffff",
             font=GEN_WAN_MIN_S,
             spacing=20,
         )
 
-    img = Image.new("RGBA", (800, 1600), color="white")
+    img = Image.new("RGBA", (800, 1600), color="#1c1c1c")
     draw = await draw_head(img, player, "干员信息")
     for (i, operator) in enumerate(player.operator_stat):
         draw_operator(
